@@ -7,55 +7,51 @@
     <div class="flex flex-col lg:flex-row gap-6">
         <!-- Left Panel: Day Selection -->
         <div class="lg:w-1/4">
-            <div class="bg-white rounded-lg shadow-md p-6 sticky top-6">
-                <h2 class="text-xl font-bold mb-4 text-gray-800">Выберите день</h2>
-                <div class="space-y-2">
-                    <button class="day-btn w-full text-left px-4 py-3 rounded-lg hover:bg-purple-100 transition-colors flex items-center" data-day="monday">
-                        <span class="mr-3">📅</span> Понедельник
-                    </button>
-                    <button class="day-btn w-full text-left px-4 py-3 rounded-lg hover:bg-purple-100 transition-colors flex items-center" data-day="tuesday">
-                        <span class="mr-3">📅</span> Вторник
-                    </button>
-                    <button class="day-btn w-full text-left px-4 py-3 rounded-lg hover:bg-purple-100 transition-colors flex items-center" data-day="wednesday">
-                        <span class="mr-3">📅</span> Среда
-                    </button>
-                    <button class="day-btn w-full text-left px-4 py-3 rounded-lg hover:bg-purple-100 transition-colors flex items-center" data-day="thursday">
-                        <span class="mr-3">📅</span> Четверг
-                    </button>
-                    <button class="day-btn w-full text-left px-4 py-3 rounded-lg hover:bg-purple-100 transition-colors flex items-center" data-day="friday">
-                        <span class="mr-3">📅</span> Пятница
-                    </button>
-                    <button class="day-btn w-full text-left px-4 py-3 rounded-lg hover:bg-purple-100 transition-colors flex items-center" data-day="saturday">
-                        <span class="mr-3">📅</span> Суббота
-                    </button>
+            <div class="card sticky top-6">
+                <div class="card-header">
+                    <h2 class="text-xl font-bold text-gray-800">Выберите день</h2>
                 </div>
-                
-                <div class="mt-8">
-                    <button id="submit-order" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-4 rounded-lg transition-colors">
-                        📝 Сделать заказ
-                    </button>
+                <div class="card-body">
+                    <div class="space-y-2">
+                        <button class="day-btn w-full text-left px-4 py-3 rounded-lg hover:bg-purple-100 transition-colors flex items-center" data-day="monday">
+                            <span class="mr-3">📅</span> Понедельник
+                        </button>
+                        <button class="day-btn w-full text-left px-4 py-3 rounded-lg hover:bg-purple-100 transition-colors flex items-center" data-day="tuesday">
+                            <span class="mr-3">📅</span> Вторник
+                        </button>
+                        <button class="day-btn w-full text-left px-4 py-3 rounded-lg hover:bg-purple-100 transition-colors flex items-center" data-day="wednesday">
+                            <span class="mr-3">📅</span> Среда
+                        </button>
+                        <button class="day-btn w-full text-left px-4 py-3 rounded-lg hover:bg-purple-100 transition-colors flex items-center" data-day="thursday">
+                            <span class="mr-3">📅</span> Четверг
+                        </button>
+                        <button class="day-btn w-full text-left px-4 py-3 rounded-lg hover:bg-purple-100 transition-colors flex items-center" data-day="friday">
+                            <span class="mr-3">📅</span> Пятница
+                        </button>
+                        <button class="day-btn w-full text-left px-4 py-3 rounded-lg hover:bg-purple-100 transition-colors flex items-center" data-day="saturday">
+                            <span class="mr-3">📅</span> Суббота
+                        </button>
+                    </div>
+
+                    <div class="mt-8">
+                        <button id="submit-order" class="btn btn-primary btn-block">
+                            📝 Сделать заказ
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Right Panel: Products Table -->
+        <!-- Right Panel: Products Tiles -->
         <div class="lg:w-3/4">
-            <div class="bg-white rounded-lg shadow-md p-6">
-                <h2 class="text-xl font-bold mb-4 text-gray-800">Меню на <span id="selected-day-text">Понедельник</span></h2>
-                <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Блюдо</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Тип</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Цена</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Количество</th>
-                            </tr>
-                        </thead>
-                        <tbody id="products-table-body" class="bg-white divide-y divide-gray-200">
-                            <!-- Products will be loaded here dynamically -->
-                        </tbody>
-                    </table>
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="text-xl font-bold text-gray-800">Меню на <span id="selected-day-text">Понедельник</span></h2>
+                </div>
+                <div class="card-body">
+                    <div id="products-tiles-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <!-- Product tiles will be loaded here dynamically -->
+                    </div>
                 </div>
             </div>
         </div>
@@ -78,6 +74,9 @@ document.addEventListener('DOMContentLoaded', function() {
         'saturday': 'Суббота'
     };
 
+    // Store quantities for each day
+    const dayQuantities = {};
+
     // Current selected day
     let currentDay = 'monday';
     
@@ -85,18 +84,21 @@ document.addEventListener('DOMContentLoaded', function() {
     const dayButtons = document.querySelectorAll('.day-btn');
     dayButtons.forEach(button => {
         button.addEventListener('click', function() {
+            // Save current day's quantities before switching
+            saveCurrentDayQuantities();
+
             // Remove active class from all buttons
             dayButtons.forEach(btn => btn.classList.remove('bg-purple-100'));
-            
+
             // Add active class to clicked button
             this.classList.add('bg-purple-100');
-            
+
             // Update current day
             currentDay = this.getAttribute('data-day');
-            
+
             // Update selected day text
             document.getElementById('selected-day-text').textContent = daysMap[currentDay];
-            
+
             // Reload products for the selected day
             loadProductsForDay(currentDay);
         });
@@ -115,11 +117,31 @@ document.addEventListener('DOMContentLoaded', function() {
         loadAllProducts();
     }
 
-    // Function to load all products
+    // Function to save current day's quantities
+    function saveCurrentDayQuantities() {
+        const quantityInputs = document.querySelectorAll(`.quantity-input[data-day="${currentDay}"]`);
+        dayQuantities[currentDay] = {};
+
+        quantityInputs.forEach(input => {
+            const productId = input.getAttribute('data-product-id');
+            const quantity = parseInt(input.value);
+            dayQuantities[currentDay][productId] = quantity;
+        });
+    }
+
+    // Function to get quantity for a product on a specific day
+    function getQuantityForDay(productId, day) {
+        if (dayQuantities[day] && dayQuantities[day][productId] !== undefined) {
+            return dayQuantities[day][productId];
+        }
+        return 0; // Default to 0 if no value is stored
+    }
+
+    // Function to load all products as tiles
     function loadAllProducts() {
         // Clear existing products
-        const tableBody = document.getElementById('products-table-body');
-        tableBody.innerHTML = '';
+        const container = document.getElementById('products-tiles-container');
+        container.innerHTML = '';
 
         // Get products from Flask template variables (defined in script tag)
         const breakfast = window.BREAKFAST_DATA || [];
@@ -148,25 +170,93 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
 
-        // Add products to the table
+        // Add products as tiles
         allProducts.forEach(product => {
-            const row = document.createElement('tr');
-            row.innerHTML = `
-                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${product.name}</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${product.type}</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${product.price} ₽</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    <div class="flex items-center">
-                        <select class="quantity-select border rounded px-2 py-1 w-16" data-product-id="${product.id}" data-day="${currentDay}">
-                            <option value="0">0</option>
-                            <option value="1">1</option>
-                            <option value="2">2</option>
-                        </select>
+            // Get the saved quantity for this product on the current day
+            const savedQuantity = getQuantityForDay(product.id, currentDay);
+
+            const tile = document.createElement('div');
+            tile.className = 'menu-card';
+            tile.innerHTML = `
+                <div class="menu-card-body">
+                    <div class="menu-card-header">
+                        <div class="menu-card-emoji">🍽️</div>
+                        <div class="menu-card-price">${product.price} ₽</div>
                     </div>
-                </td>
+                    <div class="menu-card-content">
+                        <h3 class="menu-card-title">${product.name}</h3>
+                        <div class="menu-card-meta">
+                            <span class="badge badge-primary">${product.type}</span>
+                        </div>
+                    </div>
+                    <div class="menu-card-actions">
+                        <div class="flex items-center justify-between w-full">
+                            <span class="text-gray-700">Количество:</span>
+                            <div class="flex items-center border rounded">
+                                <button class="quantity-decrease w-8 h-8 flex items-center justify-center text-gray-600 hover:bg-gray-100" data-product-id="${product.id}" data-day="${currentDay}">-</button>
+                                <input type="number" class="quantity-input w-12 h-8 text-center border-x" value="${savedQuantity}" min="0" max="2" data-product-id="${product.id}" data-day="${currentDay}" readonly>
+                                <button class="quantity-increase w-8 h-8 flex items-center justify-center text-gray-600 hover:bg-gray-100" data-product-id="${product.id}" data-day="${currentDay}">+</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             `;
-            tableBody.appendChild(row);
+            container.appendChild(tile);
         });
+
+        // Add event listeners to the new buttons
+        addQuantityButtonListeners();
+    }
+
+    // Function to add event listeners to quantity buttons
+    function addQuantityButtonListeners() {
+        // Add event listeners to decrease buttons
+        document.querySelectorAll('.quantity-decrease').forEach(button => {
+            button.removeEventListener('click', handleDecreaseClick); // Remove old listeners to prevent duplicates
+            button.addEventListener('click', handleDecreaseClick);
+        });
+
+        // Add event listeners to increase buttons
+        document.querySelectorAll('.quantity-increase').forEach(button => {
+            button.removeEventListener('click', handleIncreaseClick); // Remove old listeners to prevent duplicates
+            button.addEventListener('click', handleIncreaseClick);
+        });
+    }
+
+    // Handler for decrease button
+    function handleDecreaseClick(event) {
+        const button = event.target;
+        const input = button.parentElement.querySelector('.quantity-input');
+        let value = parseInt(input.value);
+        if (value > 0) {
+            value--;
+            input.value = value;
+
+            // Save the updated quantity for the current day
+            const productId = input.getAttribute('data-product-id');
+            if (!dayQuantities[currentDay]) {
+                dayQuantities[currentDay] = {};
+            }
+            dayQuantities[currentDay][productId] = value;
+        }
+    }
+
+    // Handler for increase button
+    function handleIncreaseClick(event) {
+        const button = event.target;
+        const input = button.parentElement.querySelector('.quantity-input');
+        let value = parseInt(input.value);
+        if (value < 2) {
+            value++;
+            input.value = value;
+
+            // Save the updated quantity for the current day
+            const productId = input.getAttribute('data-product-id');
+            if (!dayQuantities[currentDay]) {
+                dayQuantities[currentDay] = {};
+            }
+            dayQuantities[currentDay][productId] = value;
+        }
     }
 
     // Submit order button
@@ -180,24 +270,22 @@ document.addEventListener('DOMContentLoaded', function() {
             orderData[day] = {};
         });
 
-        // Get all quantity selects
-        const quantitySelects = document.querySelectorAll('.quantity-select');
-        quantitySelects.forEach(select => {
-            const productId = select.getAttribute('data-product-id');
-            const day = select.getAttribute('data-day');
-            const quantity = parseInt(select.value);
+        // Get all quantity inputs
+        const quantityInputs = document.querySelectorAll('.quantity-input');
+        quantityInputs.forEach(input => {
+            const productId = input.getAttribute('data-product-id');
+            const day = input.getAttribute('data-day');
+            const quantity = parseInt(input.value);
 
             // Skip if quantity is 0
             if (quantity > 0) {
-                const productName = getProductById(productId);
-
                 // Initialize user object if it doesn't exist
-                if (!orderData[day]['{{ current_user.email }}']) {
-                    orderData[day]['{{ current_user.email }}'] = {};
+                if (!orderData[day]['user{{ current_user.id }}']) {
+                    orderData[day]['user{{ current_user.id }}'] = {};
                 }
 
-                // Add product and quantity to the user's order for this day
-                orderData[day]['{{ current_user.email }}'][productName] = quantity;
+                // Add product ID and quantity to the user's order for this day
+                orderData[day]['user{{ current_user.id }}'][productId] = quantity;
             }
         });
 
@@ -245,6 +333,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
         return 'Неизвестный продукт';
     }
+
+    // Initialize the first day's products when the page loads
+    loadAllProducts();
     
     // Show toast notification
     function showToast(message, type) {

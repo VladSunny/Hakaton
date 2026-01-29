@@ -4,5 +4,9 @@
   "wednesday": {},
   "thursday": {},
   "friday": {},
-  "saturday": {}
+  "saturday": {
+    "student@school.ru": {
+      "Макароны с сыром": 1
+    }
+  }
 }

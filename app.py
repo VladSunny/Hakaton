@@ -399,7 +399,6 @@ def create_order():
 
     return render_template('student/create_order.html', breakfast=breakfast_data, lunch=lunch_data)
 
-
 @app.route('/api/create_order', methods=['POST'])
 @login_required
 @role_required('student')
@@ -407,8 +406,8 @@ def api_create_order():
     data = request.json
     user_id = current_user.id
 
-    # Define the path to the orders.json file
-    orders_file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data', 'orders.json')
+    # Define the path to the orders.json file in the instance directory
+    orders_file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'instance', 'orders.json')
 
     # Load existing orders if the file exists
     if os.path.exists(orders_file_path):
@@ -418,7 +417,7 @@ def api_create_order():
             except json.JSONDecodeError:
                 orders = {}
     else:
-        # Create the data directory if it doesn't exist
+        # Create the instance directory if it doesn't exist
         os.makedirs(os.path.dirname(orders_file_path), exist_ok=True)
         orders = {}
 
@@ -426,9 +425,10 @@ def api_create_order():
     for day, day_data in data.items():
         if day not in orders:
             orders[day] = {}
-        # Update the orders for the current user
-        if current_user.email in day_data:
-            orders[day][current_user.email] = day_data[current_user.email]
+        # Update the orders for the current user using user ID format
+        user_key = f"user{current_user.id}"
+        if user_key in day_data:
+            orders[day][user_key] = day_data[user_key]
 
     # Save the updated orders back to the file
     with open(orders_file_path, 'w', encoding='utf-8') as f:
@@ -840,9 +840,7 @@ def export_weekly_report():
 @role_required('admin')
 def export_daily_report():
     from instance.get_word import generate_daily_reports
-
-    day_name = datetime.now().strftime('%A').lower()
-    report_path = generate_daily_reports(day_name=day_name)
+    report_path = generate_daily_reports()
     return send_file(
         report_path,
         as_attachment=True,

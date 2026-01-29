@@ -4,12 +4,36 @@ from datetime import datetime
 from pathlib import Path
 
 from docx import Document
-from docx.shared import Inches
+from docx.shared import Inches, Pt
 
 BASE_DIR = Path(__file__).resolve().parent
 DEFAULT_JSON_PATH = BASE_DIR / "orders.json"
 DEFAULT_DB_PATH = BASE_DIR / "school_food.db"
 DEFAULT_REPORTS_DIR = BASE_DIR / "reports"
+
+SOUP_KEYWORDS = ("суп", "борщ", "щи", "уха", "солянка", "рассольник")
+SALAD_KEYWORDS = ("салат",)
+
+
+def _detect_dish_type(name):
+    name_l = name.lower()
+    if any(k in name_l for k in SOUP_KEYWORDS):
+        return "soup"
+    if any(k in name_l for k in SALAD_KEYWORDS):
+        return "salad"
+    return None
+
+
+def _normalize_meal_name(name, unique_types):
+    dish_type = _detect_dish_type(name)
+    if dish_type == "soup" and unique_types.get("soup", 0) == 1:
+        return "суп"
+    if dish_type == "salad" and unique_types.get("salad", 0) == 1:
+        return "салат"
+    name_l = name.lower()
+    if "компот" in name_l:
+        return "компот"
+    return name
 
 def week(json_file_path=DEFAULT_JSON_PATH):
     with open(json_file_path, 'r', encoding='utf-8') as f:
@@ -114,6 +138,13 @@ def generate_report(output_file_path=None, json_file_path=DEFAULT_JSON_PATH, pri
         data = json.load(f)
 
     doc = Document()
+    section = doc.sections[0]
+    section.left_margin = Inches(0.2)
+    section.right_margin = Inches(0.2)
+    section.top_margin = Inches(0.2)
+    section.bottom_margin = Inches(0.2)
+    doc.styles['Normal'].font.name = 'Times New Roman'
+    doc.styles['Normal'].font.size = Pt(12)
     
     doc.add_heading('Отчет по заказам за неделю', 0)
     
@@ -212,14 +243,31 @@ def generate_daily_reports(
     else:
         days_to_generate = days_of_week
 
-    saved_files = []
+    doc = Document()
+    section = doc.sections[0]
+    section.left_margin = Inches(0.2)
+    section.right_margin = Inches(0.2)
+    section.top_margin = Inches(0.2)
+    section.bottom_margin = Inches(0.2)
+    doc.styles['Normal'].font.name = 'Times New Roman'
+    doc.styles['Normal'].font.size = Pt(12)
 
-    for day_name in days_to_generate:
+    for idx, day_name in enumerate(days_to_generate):
         day_data = data.get(day_name, {})
 
-        doc = Document()
+        if idx > 0:
+            doc.add_page_break()
+
         doc.add_heading(f'Отчет по заказам на {day_name}', 0)
         doc.add_paragraph(f'Дата: {datetime.now().strftime("%d.%m.%Y")}')
+
+        unique_types = {"soup": set(), "salad": set()}
+        for orders in day_data.values():
+            for product in orders.keys():
+                dish_type = _detect_dish_type(product)
+                if dish_type:
+                    unique_types[dish_type].add(product)
+        unique_type_counts = {k: len(v) for k, v in unique_types.items()}
 
         user_orders = []
         for user_key, orders in day_data.items():
@@ -236,10 +284,11 @@ def generate_daily_reports(
 
             meal_parts = []
             for product, quantity in orders.items():
+                short_name = _normalize_meal_name(product, unique_type_counts)
                 if quantity > 1:
-                    meal_parts.append(f"{product}({quantity})")
+                    meal_parts.append(f"{short_name}({quantity})")
                 else:
-                    meal_parts.append(product)
+                    meal_parts.append(short_name)
 
             meal_str = "+".join(meal_parts) if meal_parts else "Нет заказов"
 
@@ -253,20 +302,22 @@ def generate_daily_reports(
         if not user_orders:
             doc.add_paragraph("Нет данных по заказам за выбранный день.")
         else:
-            orders_per_page = 28
+            orders_per_page = 30
             for i, user_order in enumerate(user_orders):
                 if i > 0 and i % orders_per_page == 0:
                     doc.add_page_break()
 
                 p = doc.add_paragraph()
-                p.add_run(f"{user_order['name']} ({user_order['info']}) [{user_order['class']}] - ").bold = True
+                p.add_run(f"{user_order['name']} {user_order['class']} - ").bold = True
                 p.add_run(user_order['meal'])
 
+    if day_name:
         filename = output_dir / f"daily_report_{day_name}_{datetime.now().strftime('%Y-%m-%d')}.docx"
-        doc.save(filename)
-        saved_files.append(str(filename))
+    else:
+        filename = output_dir / f"daily_report_week_{datetime.now().strftime('%Y-%m-%d')}.docx"
+    doc.save(filename)
 
-    return saved_files if not day_name else saved_files[0]
+    return str(filename)
 
 
 if __name__ == "__main__":
