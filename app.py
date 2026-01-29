@@ -839,7 +839,7 @@ def export_weekly_report():
 @login_required
 @role_required('admin')
 def export_daily_report():
-    from instance.get_word import generate_daily_reports
+    from instance.get_word import generate_daily_reports 
     report_path = generate_daily_reports()
     return send_file(
         report_path,
