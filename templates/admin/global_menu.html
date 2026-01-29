@@ -3,5 +3,50 @@
 {% block title %}Статистика{% endblock %}
 
 {% block content %}
+<div class="page-top-spacing">
+    <div class="page-header">
+        <div class="reports-header">
+            <div class="reports-header-left">
+                <h2 class="page-title">Глобальное Меню</h2>
+            </div>
+            <div class="reports-header-actions">
+                <button onclick="exportReport()" class="btn btn-primary">
+                    <span>📥</span> Импорт
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="flex flex-col gap-3">
+    {% for item in menu %}
+        <div class="stat-card">
+             <div class="menu-card-body">
+                <h4 class="menu-card-title"> {{ item.name }} </h4>
+
+                <div class="menu-card-header">
+                    <span class="menu-card-price"> 1000 ₽</span>
+                </div>
+
+                <div class="menu-card-meta">
+                    <i class="fas fa-fire text-orange-400"></i>
+                    <span> 1000 ккал</span>
+                </div>
+
+                <div>
+                    Количество
+                </div>
+
+                <div>
+                    Ингредиенты
+                </div>
+
+                <div>
+                    Тип
+                </div>
+             </div>
+        </div>
+    {% endfor %}
+</div>
 
 {% endblock %}
