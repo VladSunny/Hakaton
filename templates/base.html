@@ -40,6 +40,9 @@
             <a href="{{ url_for('student_orders') }}" class="mobile-nav-link {% if request.endpoint == 'student_orders' %}active{% endif %}">
                 <span class="nav-icon">🛒</span> Мои заказы
             </a>
+            <a href="{{ url_for('create_order') }}" class="mobile-nav-link {% if request.endpoint == 'create_order' %}active{% endif %}">
+                <span class="nav-icon">📝</span> Создать заказ
+            </a>
             <a href="{{ url_for('student_payment') }}" class="mobile-nav-link {% if request.endpoint == 'student_payment' %}active{% endif %}">
                 <span class="nav-icon">💳</span> Оплата
             </a>
@@ -133,6 +136,9 @@
                 <a href="{{ url_for('student_orders') }}" class="nav-tab {% if request.endpoint == 'student_orders' %}active{% endif %}">
                     <span class="nav-icon">🛒</span> Мои заказы
                 </a>
+                <a href="{{ url_for('create_order') }}" class="nav-tab {% if request.endpoint == 'create_order' %}active{% endif %}">
+                    <span class="nav-icon">📝</span> Создать заказ
+                </a>
                 <a href="{{ url_for('student_payment') }}" class="nav-tab {% if request.endpoint == 'student_payment' %}active{% endif %}">
                     <span class="nav-icon">💳</span> Оплата
                 </a>
@@ -199,6 +205,10 @@
             <a href="{{ url_for('student_orders') }}" class="bottom-nav-item {% if request.endpoint == 'student_orders' %}active{% endif %}">
                 <span class="bottom-nav-icon">🧾</span>
                 <span>Заказы</span>
+            </a>
+            <a href="{{ url_for('create_order') }}" class="bottom-nav-item {% if request.endpoint == 'create_order' %}active{% endif %}">
+                <span class="bottom-nav-icon">📝</span>
+                <span>Заказ</span>
             </a>
             <a href="{{ url_for('student_payment') }}" class="bottom-nav-item {% if request.endpoint == 'student_payment' %}active{% endif %}">
                 <span class="bottom-nav-icon">💳</span>

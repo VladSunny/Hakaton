@@ -5,11 +5,67 @@
 {% block content %}
 <div class="page-top-spacing">
     <div class="page-header">
-        <h2 class="page-title">Оплата питания</h2>
+        <h2 class="page-title">Оплата (неделя 1)</h2>
     </div>
 </div>
 
-<div class="payment-grid">
+<!-- Weekly Menu Table -->
+<div class="card menu-table-card" style="margin-bottom: 20px;">
+    <div class="card-body">
+        <h3 class="payment-section-title">
+            <span class="payment-section-icon">🍽️</span>
+            Меню на неделю
+        </h3>
+        <table class="menu-table">
+            <thead>
+                <tr>
+                    <th>День недели</th>
+                    <th>Блюдо</th>
+                    <th>Стоимость</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Понедельник</td>
+                    <td>Борщ, котлета с пюре, компот</td>
+                    <td>180 ₽</td>
+                </tr>
+                <tr>
+                    <td>Вторник</td>
+                    <td>Суп минestrone, запеканка с изюмом, чай</td>
+                    <td>165 ₽</td>
+                </tr>
+                <tr>
+                    <td>Среда</td>
+                    <td>Грибной крем-суп, куриная грудка с рисом, морс</td>
+                    <td>190 ₽</td>
+                </tr>
+                <tr>
+                    <td>Четверг</td>
+                    <td>Щи, рыбная котлета с гречкой, сок</td>
+                    <td>175 ₽</td>
+                </tr>
+                <tr>
+                    <td>Пятница</td>
+                    <td>Томатный суп, макароны с сыром, компот</td>
+                    <td>155 ₽</td>
+                </tr>
+                <tr>
+                    <td>Суббота</td>
+                    <td>Солянка, свинина с картошкой, чай</td>
+                    <td>200 ₽</td>
+                </tr>
+                <tr>
+                    <th>Итого:</th>
+                    <th></th>
+                    <th>1065 ₽</th>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="payment-form-container">
     <!-- Balance Card -->
     <div class="card">
         <div class="card-body">
@@ -19,211 +75,157 @@
                     <span class="balance-icon">💰</span>
                 </div>
                 <div class="balance-info">
-                    <p class="balance-label">Ваш баланс</p>
-                    <p id="balance-display" class="balance-amount">{{ current_user.balance }} ₽</p>
+                    <p class="balance-label">Итого к оплате:</p>
+                    <p id="balance-display" class="balance-amount">1065 ₽</p>
                 </div>
             </div>
 
             <!-- Divider -->
             <div class="payment-divider"></div>
 
-            <!-- Top Up Section -->
-            <div class="topup-section">
+            <!-- Fake Card Details Form -->
+            <div class="card-details-form">
                 <h3 class="payment-section-title">
                     <span class="payment-section-icon">💳</span>
-                    Пополнить баланс
+                    Введите данные карты
                 </h3>
-                
-                <div class="topup-buttons">
-                    <button onclick="topUp(300)" class="topup-amount-btn">
-                        <span class="topup-value">300</span>
-                        <span class="topup-currency">₽</span>
-                    </button>
-                    <button onclick="topUp(500)" class="topup-amount-btn">
-                        <span class="topup-value">500</span>
-                        <span class="topup-currency">₽</span>
-                    </button>
-                    <button onclick="topUp(1000)" class="topup-amount-btn topup-popular">
-                        <span class="topup-popular-badge">Популярное</span>
-                        <span class="topup-value">1000</span>
-                        <span class="topup-currency">₽</span>
-                    </button>
-                    <button onclick="topUp(2000)" class="topup-amount-btn">
-                        <span class="topup-value">2000</span>
-                        <span class="topup-currency">₽</span>
-                    </button>
-                </div>
 
-                <div class="topup-custom-wrapper">
-                    <div class="topup-custom-input-wrapper">
-                        <span class="topup-input-icon">₽</span>
-                        <input type="number" id="custom-amount" class="topup-custom-input" placeholder="Другая сумма">
+                <form id="card-details-form" enctype="multipart/form-data">
+                    <div class="form-group">
+                        <label for="card-number" class="form-label">Номер карты</label>
+                        <input type="text" id="card-number" class="form-control" placeholder="1234 5678 9012 3456" maxlength="19">
                     </div>
-                    <button onclick="topUp(parseInt(document.getElementById('custom-amount').value))" class="btn btn-primary topup-custom-btn">
-                        Пополнить
-                    </button>
-                </div>
-            </div>
 
-            <!-- Payment Methods -->
-            <div class="payment-methods">
-                <p class="payment-methods-title">Способы оплаты</p>
-                <div class="payment-methods-icons">
-                    <span class="payment-method" title="Банковская карта">💳</span>
-                    <span class="payment-method" title="СБП">🏦</span>
-                    <span class="payment-method" title="Наличные в кассе">💵</span>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Subscriptions Card -->
-    <div class="card">
-        <div class="card-body">
-            <h3 class="payment-section-title">
-                <span class="payment-section-icon">🎫</span>
-                Абонементы
-            </h3>
-            <p class="payment-section-subtitle">Выгоднее, чем платить за каждый прием пищи отдельно</p>
-
-            <div class="subscriptions-list">
-                <!-- Week Subscription -->
-                <div onclick="buySubscription('week')" class="subscription-item">
-                    <div class="subscription-icon-wrapper subscription-icon-week">
-                        <span>📅</span>
-                    </div>
-                    <div class="subscription-details">
-                        <div class="subscription-header">
-                            <h4 class="subscription-name">Недельный</h4>
-                            <div class="subscription-badge">-15%</div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="expiry-date" class="form-label">Срок действия</label>
+                            <input type="text" id="expiry-date" class="form-control" placeholder="MM/YY" maxlength="5">
                         </div>
-                        <p class="subscription-description">5 завтраков + 5 обедов</p>
-                        <div class="subscription-footer">
-                            <span class="subscription-price">1 500 ₽</span>
-                            <span class="subscription-old-price">1 750 ₽</span>
+                        <div class="form-group">
+                            <label for="cvv" class="form-label">CVV</label>
+                            <input type="password" id="cvv" class="form-control" placeholder="123" maxlength="3">
                         </div>
                     </div>
-                    <span class="subscription-arrow">→</span>
-                </div>
 
-                <!-- Month Subscription -->
-                <div onclick="buySubscription('month')" class="subscription-item subscription-popular">
-                    <div class="subscription-popular-label">Лучшее предложение</div>
-                    <div class="subscription-icon-wrapper subscription-icon-month">
-                        <span>📆</span>
+                    <!-- File Upload for Payment Confirmation оаылвышл-->
+                    <div class="form-group">
+                        <label for="payment-proof" class="form-label">Подтверждение оплаты</label>
+                        <input type="file" id="payment-proof" class="form-control" accept=".png,.jpeg,.jpg,.pdf" />
+                        <small class="form-hint">Допустимые форматы: PNG, JPEG, JPG, PDF</small>
                     </div>
-                    <div class="subscription-details">
-                        <div class="subscription-header">
-                            <h4 class="subscription-name">Месячный</h4>
-                            <div class="subscription-badge subscription-badge-gold">-20%</div>
-                        </div>
-                        <p class="subscription-description">20 завтраков + 20 обедов</p>
-                        <div class="subscription-footer">
-                            <span class="subscription-price">5 500 ₽</span>
-                            <span class="subscription-old-price">7 000 ₽</span>
-                        </div>
-                    </div>
-                    <span class="subscription-arrow">→</span>
-                </div>
-            </div>
 
-            {% if subscription %}
-            <!-- Active Subscription -->
-            <div class="active-subscription">
-                <div class="active-subscription-header">
-                    <span class="active-subscription-icon">✅</span>
-                    <span class="active-subscription-title">Активный абонемент</span>
-                </div>
-                <div class="active-subscription-body">
-                    <div class="active-subscription-type">
-                        {% if subscription.sub_type == 'week' %}
-                        <span class="active-subscription-emoji">📅</span>
-                        <span>Недельный</span>
-                        {% else %}
-                        <span class="active-subscription-emoji">📆</span>
-                        <span>Месячный</span>
-                        {% endif %}
-                    </div>
-                    <div class="active-subscription-remaining">
-                        <span class="remaining-count">{{ subscription.remaining_meals }}</span>
-                        <span class="remaining-label">приёмов пищи осталось</span>
-                    </div>
-                    <div class="active-subscription-progress">
-                        <div class="progress-bar">
-                            <div class="progress-fill" style="width: {{ (subscription.remaining_meals / (10 if subscription.sub_type == 'week' else 40)) * 100 }}%"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            {% endif %}
-
-            <!-- Benefits -->
-            <div class="subscription-benefits">
-                <h4 class="benefits-title">Преимущества абонемента</h4>
-                <ul class="benefits-list">
-                    <li class="benefit-item">
-                        <span class="benefit-icon">💰</span>
-                        <span>Экономия до 20% на питании</span>
-                    </li>
-                    <li class="benefit-item">
-                        <span class="benefit-icon">⚡</span>
-                        <span>Быстрое получение без оплаты</span>
-                    </li>
-                    <li class="benefit-item">
-                        <span class="benefit-icon">📊</span>
-                        <span>Контроль расходов на питание</span>
-                    </li>
-                </ul>
+                    <button type="submit" class="btn btn-primary topup-custom-btn">
+                        Отправить данные
+                    </button>
+                </form>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Transaction History -->
-<div class="card transaction-history-card">
-    <div class="card-body">
-        <h3 class="payment-section-title">
-            <span class="payment-section-icon">📋</span>
-            История операций
-        </h3>
-        <div class="transaction-list">
-            <div class="transaction-item">
-                <div class="transaction-icon transaction-icon-income">↓</div>
-                <div class="transaction-details">
-                    <span class="transaction-title">Пополнение баланса</span>
-                    <span class="transaction-date">Сегодня, 10:30</span>
-                </div>
-                <span class="transaction-amount transaction-amount-positive">+500 ₽</span>
-            </div>
-            <div class="transaction-item">
-                <div class="transaction-icon transaction-icon-expense">↑</div>
-                <div class="transaction-details">
-                    <span class="transaction-title">Оплата обеда</span>
-                    <span class="transaction-date">Вчера, 13:15</span>
-                </div>
-                <span class="transaction-amount transaction-amount-negative">-180 ₽</span>
-            </div>
-            <div class="transaction-item">
-                <div class="transaction-icon transaction-icon-income">↓</div>
-                <div class="transaction-details">
-                    <span class="transaction-title">Пополнение баланса</span>
-                    <span class="transaction-date">20.01.2025</span>
-                </div>
-                <span class="transaction-amount transaction-amount-positive">+1000 ₽</span>
-            </div>
-        </div>
-    </div>
-</div>
 {% endblock %}
 
 {% block scripts %}
 <script>
+// Format card number as user types
+document.getElementById('card-number').addEventListener('input', function(e) {
+    let value = e.target.value.replace(/\D/g, '');
+    if (value.length > 16) value = value.substring(0, 16);
+
+    // Format as XXXX XXXX XXXX XXXX
+    let formattedValue = '';
+    for (let i = 0; i < value.length; i++) {
+        if (i > 0 && i % 4 === 0) formattedValue += ' ';
+        formattedValue += value[i];
+    }
+
+    e.target.value = formattedValue;
+});
+
+// Format expiry date as user types
+document.getElementById('expiry-date').addEventListener('input', function(e) {
+    let value = e.target.value.replace(/\D/g, '');
+    if (value.length > 4) value = value.substring(0, 4);
+
+    // Format as MM/YY
+    if (value.length >= 2) {
+        value = value.substring(0, 2) + '/' + value.substring(2);
+    }
+
+    e.target.value = value;
+});
+
+// Handle form submission
+document.getElementById('card-details-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    const cardNumber = document.getElementById('card-number').value;
+    const expiryDate = document.getElementById('expiry-date').value;
+    const cvv = document.getElementById('cvv').value;
+    const cardHolder = document.getElementById('card-holder').value;
+    const amount = document.getElementById('amount').value;
+    const paymentProof = document.getElementById('payment-proof').files[0];
+
+    // Validate inputs
+    if (!cardNumber || !expiryDate || !cvv || !cardHolder || !amount) {
+        showToast('Пожалуйста, заполните все поля', 'error');
+        return;
+    }
+
+    if (amount <= 0) {
+        showToast('Введите корректную сумму', 'error');
+        return;
+    }
+
+    if (!paymentProof) {
+        showToast('Пожалуйста, загрузите подтверждение оплаты', 'error');
+        return;
+    }
+
+    // Check file type
+    const validTypes = ['image/png', 'image/jpeg', 'image/jpg', 'application/pdf'];
+    if (!validTypes.includes(paymentProof.type)) {
+        showToast('Неверный формат файла. Разрешены: PNG, JPEG, JPG, PDF', 'error');
+        return;
+    }
+
+    // Create FormData object to send both form data and file
+    const formData = new FormData();
+    formData.append('card_number', cardNumber.replace(/\s/g, '')); // Remove spaces
+    formData.append('expiry_date', expiryDate);
+    formData.append('cvv', cvv);
+    formData.append('card_holder', cardHolder);
+    formData.append('amount', amount);
+    formData.append('payment_proof', paymentProof);
+
+    // Send the data to the server
+    fetch('/api/payment', {
+        method: 'POST',
+        body: formData
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            showToast(data.message, 'success');
+            document.getElementById('balance-display').textContent = data.new_balance + ' ₽';
+
+            // Reset form
+            document.getElementById('card-details-form').reset();
+        } else {
+            showToast(data.message, 'error');
+        }
+    })
+    .catch(error => {
+        showToast('Ошибка при отправке данных', 'error');
+    });
+});
+
 function topUp(amount) {
     if (!amount || amount <= 0) {
         showToast('Введите корректную сумму', 'error');
         return;
     }
-    
+
     fetch('/api/topup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

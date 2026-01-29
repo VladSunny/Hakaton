@@ -1,3 +1,4 @@
+import json
 from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify, send_file
 from flask_sqlalchemy import SQLAlchemy
 from flask_mail import Mail, Message
@@ -374,6 +375,66 @@ def student_menu():
 def student_orders():
     orders = Order.query.filter_by(user_id=current_user.id).order_by(Order.created_at.desc()).all()
     return render_template('student/orders.html', orders=orders)
+
+@app.route('/student/make_order')
+@login_required
+@role_required('student')
+def make_order():
+    breakfast = MenuItem.query.filter_by(meal_type='breakfast', available=True).all()
+    lunch = MenuItem.query.filter_by(meal_type='lunch', available=True).all()
+    orders = Order.query.filter_by(user_id=current_user.id).order_by(Order.created_at.desc()).all()
+    return render_template('student/make_order.html', orders=orders, breakfast=breakfast, lunch=lunch)
+
+
+@app.route('/student/create_order')
+@login_required
+@role_required('student')
+def create_order():
+    breakfast = MenuItem.query.filter_by(meal_type='breakfast', available=True).all()
+    lunch = MenuItem.query.filter_by(meal_type='lunch', available=True).all()
+
+    # Convert MenuItem objects to dictionaries for JSON serialization
+    breakfast_data = [{'id': item.id, 'name': item.name, 'price': item.price, 'meal_type': item.meal_type} for item in breakfast]
+    lunch_data = [{'id': item.id, 'name': item.name, 'price': item.price, 'meal_type': item.meal_type} for item in lunch]
+
+    return render_template('student/create_order.html', breakfast=breakfast_data, lunch=lunch_data)
+
+
+@app.route('/api/create_order', methods=['POST'])
+@login_required
+@role_required('student')
+def api_create_order():
+    data = request.json
+    user_id = current_user.id
+
+    # Define the path to the orders.json file
+    orders_file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data', 'orders.json')
+
+    # Load existing orders if the file exists
+    if os.path.exists(orders_file_path):
+        with open(orders_file_path, 'r', encoding='utf-8') as f:
+            try:
+                orders = json.load(f)
+            except json.JSONDecodeError:
+                orders = {}
+    else:
+        # Create the data directory if it doesn't exist
+        os.makedirs(os.path.dirname(orders_file_path), exist_ok=True)
+        orders = {}
+
+    # Merge the new order data with existing data
+    for day, day_data in data.items():
+        if day not in orders:
+            orders[day] = {}
+        # Update the orders for the current user
+        if current_user.email in day_data:
+            orders[day][current_user.email] = day_data[current_user.email]
+
+    # Save the updated orders back to the file
+    with open(orders_file_path, 'w', encoding='utf-8') as f:
+        json.dump(orders, f, ensure_ascii=False, indent=2)
+
+    return jsonify({'success': True, 'message': 'Заказ успешно создан', 'order_data': data})
 
 @app.route('/student/payment')
 @login_required
