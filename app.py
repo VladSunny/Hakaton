@@ -787,7 +787,7 @@ def export_daily_report():
         as_attachment=True,
         download_name=os.path.basename(report_path)
     )
-
+#sosal
 @app.route('/admin/users')
 @login_required
 @role_required('admin')
