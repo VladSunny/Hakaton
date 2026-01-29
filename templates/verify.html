@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Подтверждение - LearnHub</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="min-h-screen bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl shadow-2xl p-8 md:p-12 w-full max-w-md">
+        <div class="text-center mb-8">
+            <div class="w-20 h-20 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <i class="fas fa-envelope-open text-indigo-600 text-3xl"></i>
+            </div>
+
+            <h1 class="text-2xl font-bold text-gray-800 mb-2">Проверьте почту</h1>
+            <p class="text-gray-500">Мы отправили код подтверждения</p>
+
+            <div class="mt-4 inline-flex items-center space-x-2 bg-indigo-50 px-4 py-2 rounded-full">
+                <i class="fas fa-at text-indigo-600"></i>
+                <span class="text-indigo-600 font-medium">{{ email }}</span>
+            </div>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div class="mb-6 p-4 rounded-xl flex items-center space-x-3 {% if category == 'error' %}bg-red-50 text-red-700 border border-red-200{% else %}bg-green-50 text-green-700 border border-green-200{% endif %}">
+            <i class="fas {% if category == 'error' %}fa-exclamation-circle{% else %}fa-check-circle{% endif %}"></i>
+            <span>{{ message }}</span>
+        </div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+
+        <form action="{{ url_for('verify') }}" method="POST" class="space-y-6">
+            <div>
+                <label for="code" class="block text-sm font-semibold text-gray-700 mb-3 text-center">Введите 6-значный код</label>
+                <div class="flex justify-center gap-2" id="code-inputs">
+                    <input type="text" maxlength="1" class="code-input w-12 h-14 text-center text-2xl font-bold border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition" data-index="0">
+                    <input type="text" maxlength="1" class="code-input w-12 h-14 text-center text-2xl font-bold border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition" data-index="1">
+                    <input type="text" maxlength="1" class="code-input w-12 h-14 text-center text-2xl font-bold border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition" data-index="2">
+                    <input type="text" maxlength="1" class="code-input w-12 h-14 text-center text-2xl font-bold border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition" data-index="3">
+                    <input type="text" maxlength="1" class="code-input w-12 h-14 text-center text-2xl font-bold border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition" data-index="4">
+                    <input type="text" maxlength="1" class="code-input w-12 h-14 text-center text-2xl font-bold border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition" data-index="5">
+                </div>
+                <input type="hidden" id="code" name="code">
+            </div>
+
+            <button type="submit"
+                    class="w-full bg-gradient-to-r from-indigo-500 to-purple-600 text-white py-4 rounded-xl font-semibold text-lg hover:shadow-lg transform hover:scale-[1.02] transition flex items-center justify-center space-x-2">
+                <span>Подтвердить</span>
+                <i class="fas fa-check"></i>
+            </button>
+        </form>
+
+        <div class="mt-8 text-center">
+            <p class="text-gray-500 text-sm mb-3">Не получили код?</p>
+            <a href="{{ url_for('resend') }}" class="inline-flex items-center space-x-2 text-indigo-600 hover:text-indigo-800 font-semibold transition">
+                <i class="fas fa-redo"></i>
+                <span>Отправить повторно</span>
+            </a>
+        </div>
+
+        <div class="mt-6 pt-6 border-t border-gray-100">
+            <a href="{{ url_for('index') }}" class="flex items-center justify-center space-x-2 text-gray-400 hover:text-gray-600 transition">
+                <i class="fas fa-arrow-left"></i>
+                <span>На главную</span>
+            </a>
+        </div>
+
+        <!-- Таймер -->
+        <div class="mt-6 text-center">
+            <div class="inline-flex items-center space-x-2 text-gray-400 text-sm">
+                <i class="fas fa-clock"></i>
+                <span>Код действителен: <span id="timer" class="font-mono font-bold text-indigo-600">10:00</span></span>
+            </div>
+        </div>
+    </div>
+
+    <script>// Обработка ввода кода по цифрам
+        const inputs = document.querySelectorAll('.code-input');
+        const hiddenInput = document.getElementById('code');
+
+        inputs.forEach((input, index) => {
+            input.addEventListener('input', (e) => {
+                const value = e.target.value.replace(/[^0-9]/g, '');
+                e.target.value = value;
+
+                if (value && index < inputs.length - 1) {
+                    inputs[index + 1].focus();
+                }
+
+                updateHiddenInput();
+            });
+
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Backspace' && !input.value && index > 0) {
+                    inputs[index - 1].focus();
+                }
+            });
+
+            input.addEventListener('paste', (e) => {
+                e.preventDefault();
+                const paste = e.clipboardData.getData('text').replace(/[^0-9]/g, '').slice(0, 6);
+                paste.split('').forEach((char, i) => {
+                    if (inputs[i]) {
+                        inputs[i].value = char;
+                    }
+                });
+                updateHiddenInput();
+                if (paste.length === 6) {
+                    inputs[5].focus();
+                }
+            });
+        });
+
+        function updateHiddenInput() {
+            hiddenInput.value = Array.from(inputs).map(i => i.value).join('');
+        }
+
+        // Автофокус на первый input
+        inputs[0].focus();
+
+        // Таймер обратного отсчёта
+        let timeLeft = 10 * 60; // 10 минут
+        const timerElement = document.getElementById('timer');
+
+        const countdown = setInterval(() => {
+            timeLeft--;
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            timerElement.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+
+            if (timeLeft <= 0) {
+                clearInterval(countdown);
+                timerElement.textContent = 'Истёк';
+                timerElement.classList.remove('text-indigo-600');
+                timerElement.classList.add('text-red-500');
+            } else if (timeLeft <= 60) {
+                timerElement.classList.remove('text-indigo-600');
+                timerElement.classList.add('text-red-500');
+            }
+        }, 1000);</script>
+</body>
+</html>
