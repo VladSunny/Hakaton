@@ -11,9 +11,9 @@
                 <p class="reports-subtitle">Аналитика и статистика школьного питания</p>
             </div>
             <div class="reports-header-actions">
-                <button onclick="exportReport()" class="btn btn-primary">
+                <a href="{{ url_for('export_weekly_report') }}" class="btn btn-primary">
                     <span>📥</span> Экспорт
-                </button>
+                </a>
             </div>
         </div>
     </div>
@@ -276,21 +276,16 @@
         <h3>Экспорт данных</h3>
     </div>
     <div class="export-options">
-        <button onclick="exportReport('txt')" class="export-option-btn">
+        <a href="{{ url_for('export_weekly_report') }}" class="export-option-btn">
             <span class="export-icon">📄</span>
-            <span class="export-format">TXT</span>
-            <span class="export-desc">Текстовый отчёт</span>
-        </button>
-        <button onclick="exportReport('csv')" class="export-option-btn">
-            <span class="export-icon">📊</span>
-            <span class="export-format">CSV</span>
-            <span class="export-desc">Таблица данных</span>
-        </button>
-        <button onclick="printReport()" class="export-option-btn">
-            <span class="export-icon">🖨️</span>
-            <span class="export-format">Печать</span>
-            <span class="export-desc">Версия для печати</span>
-        </button>
+            <span class="export-format">Общий отчет</span>
+            <span class="export-desc">Word файл за неделю</span>
+        </a>
+        <a href="{{ url_for('export_daily_report') }}" class="export-option-btn">
+            <span class="export-icon">🗓️</span>
+            <span class="export-format">Ежедневный отчет</span>
+            <span class="export-desc">Word файл за сегодня</span>
+        </a>
     </div>
 </div>
 {% endblock %}
@@ -313,85 +308,6 @@ function filterOrders(status) {
             row.style.display = 'none';
         }
     });
-}
-
-function exportReport(format) {
-    const data = {
-        total_revenue: {{ total_revenue|int }},
-        orders_count: {{ orders_count }},
-        avg_check: {{ avg_check|int }},
-        breakfast_count: {{ breakfast_count }},
-        lunch_count: {{ lunch_count }},
-        total_meals: {{ total_meals }},
-        breakfast_revenue: {{ breakfast_revenue|int }},
-        lunch_revenue: {{ lunch_revenue|int }},
-        received_count: {{ received_count }},
-        pending_count: {{ pending_count }}
-    };
-    
-    if (format === 'csv') {
-        const csv = `Показатель,Значение
-Общая выручка,${data.total_revenue} ₽
-Всего заказов,${data.orders_count}
-Средний чек,${data.avg_check} ₽
-Завтраков,${data.breakfast_count}
-Обедов,${data.lunch_count}
-Всего порций,${data.total_meals}
-Выручка завтраки,${data.breakfast_revenue} ₽
-Выручка обеды,${data.lunch_revenue} ₽
-Получено заказов,${data.received_count}
-Ожидает получения,${data.pending_count}`;
-        
-        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `report_${new Date().toISOString().split('T')[0]}.csv`;
-        a.click();
-        URL.revokeObjectURL(url);
-        showToast('CSV отчёт скачан', 'success');
-    } else {
-        const report = `
-╔══════════════════════════════════════════╗
-║         ОТЧЁТ ПО ШКОЛЬНОМУ ПИТАНИЮ       ║
-╠══════════════════════════════════════════╣
-║  Дата формирования: ${new Date().toLocaleDateString('ru-RU')}
-╠══════════════════════════════════════════╣
-║  📊 ОСНОВНЫЕ ПОКАЗАТЕЛИ
-║  ────────────────────────────────────────
-║  💰 Общая выручка:       ${data.total_revenue} ₽
-║  🛒 Всего заказов:       ${data.orders_count}
-║  📈 Средний чек:         ${data.avg_check} ₽
-╠══════════════════════════════════════════╣
-║  🍽️ СТАТИСТИКА ПИТАНИЯ
-║  ────────────────────────────────────────
-║  ☀️ Завтраков:           ${data.breakfast_count}
-║     Выручка:             ${data.breakfast_revenue} ₽
-║  🍽️ Обедов:              ${data.lunch_count}
-║     Выручка:             ${data.lunch_revenue} ₽
-║  📦 Всего порций:        ${data.total_meals}
-╠══════════════════════════════════════════╣
-║  📋 СТАТУС ЗАКАЗОВ
-║  ────────────────────────────────────────
-║  ✓ Получено:             ${data.received_count}
-║  ⏳ Ожидает:              ${data.pending_count}
-╚══════════════════════════════════════════╝
-`;
-        
-        const blob = new Blob([report], { type: 'text/plain;charset=utf-8' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `report_${new Date().toISOString().split('T')[0]}.txt`;
-        a.click();
-        URL.revokeObjectURL(url);
-        showToast('Отчёт скачан', 'success');
-    }
-}
-
-function printReport() {
-    window.print();
-    showToast('Подготовка к печати...', 'info');
 }
 </script>
 {% endblock %}

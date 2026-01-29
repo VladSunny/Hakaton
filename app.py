@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify
+from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify, send_file
 from flask_sqlalchemy import SQLAlchemy
 from flask_mail import Mail, Message
 from datetime import datetime, timedelta
@@ -760,6 +760,33 @@ def admin_reports():
                          orders_count=orders_count,
                          received_count=received_count,
                          pending_count=pending_count)
+
+@app.route('/admin/reports/export/weekly', methods=['GET'])
+@login_required
+@role_required('admin')
+def export_weekly_report():
+    from instance.get_word import generate_report
+
+    report_path = generate_report()
+    return send_file(
+        report_path,
+        as_attachment=True,
+        download_name=os.path.basename(report_path)
+    )
+
+@app.route('/admin/reports/export/daily', methods=['GET'])
+@login_required
+@role_required('admin')
+def export_daily_report():
+    from instance.get_word import generate_daily_reports
+
+    day_name = datetime.now().strftime('%A').lower()
+    report_path = generate_daily_reports(day_name=day_name)
+    return send_file(
+        report_path,
+        as_attachment=True,
+        download_name=os.path.basename(report_path)
+    )
 
 @app.route('/admin/users')
 @login_required
