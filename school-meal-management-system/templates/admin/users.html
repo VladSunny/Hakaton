@@ -1,0 +1,400 @@
+{% extends 'base.html' %}
+
+{% block title %}Пользователи{% endblock %}
+
+{% block content %}
+<div class="page-top-spacing">
+    <div class="page-header">
+        <div class="users-header">
+            <div class="users-header-left">
+                <h2 class="page-title">Пользователи</h2>
+                <p class="users-subtitle">Управление пользователями системы</p>
+            </div>
+            <button onclick="openAddUserModal()" class="btn btn-primary">
+                <span>➕</span> Добавить
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Stats Row -->
+<div class="users-stats-row">
+    <div class="users-stat">
+        <span class="users-stat-icon">👥</span>
+        <span class="users-stat-value">{{ users|length }}</span>
+        <span class="users-stat-label">Всего</span>
+    </div>
+    <div class="users-stat users-stat-students">
+        <span class="users-stat-icon">🎓</span>
+        <span class="users-stat-value">{{ users|selectattr('role', 'equalto', 'student')|list|length }}</span>
+        <span class="users-stat-label">Учеников</span>
+    </div>
+    <div class="users-stat users-stat-cooks">
+        <span class="users-stat-icon">👨‍🍳</span>
+        <span class="users-stat-value">{{ users|selectattr('role', 'equalto', 'cook')|list|length }}</span>
+        <span class="users-stat-label">Поваров</span>
+    </div>
+    <div class="users-stat users-stat-admins">
+        <span class="users-stat-icon">👨‍💼</span>
+        <span class="users-stat-value">{{ users|selectattr('role', 'equalto', 'admin')|list|length }}</span>
+        <span class="users-stat-label">Админов</span>
+    </div>
+</div>
+
+<!-- Users List -->
+<div class="users-list-container">
+    <div class="users-list-header">
+        <div class="users-list-title">
+            <span>📋</span>
+            <h3>Список пользователей</h3>
+        </div>
+        <div class="users-filter">
+            <button class="filter-btn active" onclick="filterUsers('all')">Все</button>
+            <button class="filter-btn" onclick="filterUsers('student')">Ученики</button>
+            <button class="filter-btn" onclick="filterUsers('cook')">Повара</button>
+            <button class="filter-btn" onclick="filterUsers('admin')">Админы</button>
+        </div>
+    </div>
+    
+    <div class="users-list">
+        {% for user in users %}
+        <div class="user-list-item" data-role="{{ user.role }}" data-user-id="{{ user.id }}">
+            <div class="user-list-left">
+                <div class="user-list-avatar">
+                    {{ user.name.split()[0][0] }}{{ user.name.split()[-1][0] if user.name.split()|length > 1 else '' }}
+                </div>
+                <div class="user-list-info">
+                    <span class="user-list-name">{{ user.name }}</span>
+                    <span class="user-list-email">{{ user.email }}</span>
+                    {% if user.student_class %}
+                    <span class="user-list-class">Класс: {{ user.student_class }}</span>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="user-list-right">
+                <div class="user-list-meta">
+                    <span class="user-role-badge role-{{ user.role }}">
+                        {% if user.role == 'student' %}🎓 Ученик
+                        {% elif user.role == 'cook' %}👨‍🍳 Повар
+                        {% else %}👨‍💼 Админ{% endif %}
+                    </span>
+                    {% if user.balance is not none %}
+                    <span class="user-list-balance">{{ user.balance|int }} ₽</span>
+                    {% endif %}
+                </div>
+                <div class="user-list-actions">
+                    <button class="user-action-btn user-action-edit" onclick="openEditUserModal({{ user.id }}, '{{ user.name }}', '{{ user.email }}', '{{ user.role }}', '{{ user.student_class or '' }}')" title="Редактировать">
+                        ✏️
+                    </button>
+                    {% if user.id != current_user.id %}
+                    <button class="user-action-btn user-action-delete" onclick="confirmDeleteUser({{ user.id }}, '{{ user.name }}')" title="Удалить">
+                        🗑️
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Add User Modal -->
+<div id="add-user-modal" class="modal-overlay hidden">
+    <div class="modal modal-compact">
+        <div class="modal-header">
+            <h3 class="modal-title">Добавить пользователя</h3>
+            <button onclick="closeModal('add-user-modal')" class="modal-close">✕</button>
+        </div>
+        <div class="modal-body modal-body-compact">
+            <div class="form-row">
+                <div class="form-group form-group-compact">
+                    <label class="form-label">ФИО</label>
+                    <input type="text" id="add-user-name" class="form-input" placeholder="Иванов Иван">
+                </div>
+                <div class="form-group form-group-compact">
+                    <label class="form-label">Email</label>
+                    <input type="email" id="add-user-email" class="form-input" placeholder="email@school.ru">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group form-group-compact">
+                    <label class="form-label">Пароль</label>
+                    <input type="password" id="add-user-password" class="form-input" placeholder="Мин. 6 символов">
+                </div>
+                <div class="form-group form-group-compact">
+                    <label class="form-label">Роль</label>
+                    <select id="add-user-role" class="form-select" onchange="toggleAddUserFields()">
+                        <option value="student">🎓 Ученик</option>
+                        <option value="cook">👨‍🍳 Повар</option>
+                        <option value="admin">👨‍💼 Админ</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group form-group-compact" id="add-user-class-group">
+                <label class="form-label">Класс</label>
+                <select id="add-user-class" class="form-select">
+                    <option value="">Выберите класс</option>
+                    {% for grade in range(5, 12) %}
+                    <option value="{{ grade }}А">{{ grade }}А</option>
+                    <option value="{{ grade }}Б">{{ grade }}Б</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="modal-actions">
+                <button onclick="closeModal('add-user-modal')" class="btn btn-secondary">Отмена</button>
+                <button onclick="createUser()" class="btn btn-primary">✓ Создать</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit User Modal -->
+<div id="edit-user-modal" class="modal-overlay hidden">
+    <div class="modal modal-compact">
+        <div class="modal-header">
+            <h3 class="modal-title">Редактировать</h3>
+            <button onclick="closeModal('edit-user-modal')" class="modal-close">✕</button>
+        </div>
+        <div class="modal-body modal-body-compact">
+            <input type="hidden" id="edit-user-id">
+            <div class="form-row">
+                <div class="form-group form-group-compact">
+                    <label class="form-label">ФИО</label>
+                    <input type="text" id="edit-user-name" class="form-input">
+                </div>
+                <div class="form-group form-group-compact">
+                    <label class="form-label">Email</label>
+                    <input type="email" id="edit-user-email" class="form-input">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group form-group-compact">
+                    <label class="form-label">Новый пароль</label>
+                    <input type="password" id="edit-user-password" class="form-input" placeholder="Оставьте пустым">
+                </div>
+                <div class="form-group form-group-compact">
+                    <label class="form-label">Роль</label>
+                    <select id="edit-user-role" class="form-select" onchange="toggleEditUserFields()">
+                        <option value="student">🎓 Ученик</option>
+                        <option value="cook">👨‍🍳 Повар</option>
+                        <option value="admin">👨‍💼 Админ</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group form-group-compact" id="edit-user-class-group">
+                <label class="form-label">Класс</label>
+                <select id="edit-user-class" class="form-select">
+                    <option value="">Выберите класс</option>
+                    {% for grade in range(5, 12) %}
+                    <option value="{{ grade }}А">{{ grade }}А</option>
+                    <option value="{{ grade }}Б">{{ grade }}Б</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="modal-actions">
+                <button onclick="closeModal('edit-user-modal')" class="btn btn-secondary">Отмена</button>
+                <button onclick="updateUser()" class="btn btn-primary">✓ Сохранить</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div id="delete-user-modal" class="modal-overlay hidden">
+    <div class="modal modal-small">
+        <div class="modal-header">
+            <h3 class="modal-title">Удалить пользователя?</h3>
+            <button onclick="closeModal('delete-user-modal')" class="modal-close">✕</button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="delete-user-id">
+            <div class="delete-warning">
+                <span class="delete-warning-icon">⚠️</span>
+                <p>Вы уверены, что хотите удалить пользователя <strong id="delete-user-name"></strong>?</p>
+                <p class="delete-warning-text">Это действие нельзя отменить. Все данные пользователя будут удалены.</p>
+            </div>
+            <div class="modal-actions">
+                <button onclick="closeModal('delete-user-modal')" class="btn btn-secondary">Отмена</button>
+                <button onclick="deleteUser()" class="btn btn-danger">
+                    <span>🗑️</span> Удалить
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Filter users
+function filterUsers(role) {
+    document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+    event.target.classList.add('active');
+    
+    document.querySelectorAll('.user-list-item').forEach(item => {
+        if (role === 'all' || item.dataset.role === role) {
+            item.style.display = '';
+        } else {
+            item.style.display = 'none';
+        }
+    });
+}
+
+// Add User Modal
+function openAddUserModal() {
+    document.getElementById('add-user-name').value = '';
+    document.getElementById('add-user-email').value = '';
+    document.getElementById('add-user-password').value = '';
+    document.getElementById('add-user-role').value = 'student';
+    document.getElementById('add-user-class').value = '';
+    document.getElementById('add-user-balance').value = '0';
+    toggleAddUserFields();
+    openModal('add-user-modal');
+}
+
+function toggleAddUserFields() {
+    const role = document.getElementById('add-user-role').value;
+    const classGroup = document.getElementById('add-user-class-group');
+    
+    if (role === 'student') {
+        classGroup.style.display = '';
+    } else {
+        classGroup.style.display = 'none';
+    }
+}
+
+function createUser() {
+    const name = document.getElementById('add-user-name').value;
+    const email = document.getElementById('add-user-email').value;
+    const password = document.getElementById('add-user-password').value;
+    const role = document.getElementById('add-user-role').value;
+    const studentClass = document.getElementById('add-user-class').value;
+    
+    if (!name || !email || !password) {
+        showToast('Заполните все обязательные поля', 'error');
+        return;
+    }
+    
+    if (password.length < 6) {
+        showToast('Пароль должен быть минимум 6 символов', 'error');
+        return;
+    }
+    
+    fetch('/api/admin/user/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            name: name,
+            email: email,
+            password: password,
+            role: role,
+            student_class: studentClass
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            showToast(data.message, 'success');
+            closeModal('add-user-modal');
+            setTimeout(() => location.reload(), 500);
+        } else {
+            showToast(data.message, 'error');
+        }
+    });
+}
+
+// Edit User Modal
+function openEditUserModal(id, name, email, role, studentClass) {
+    document.getElementById('edit-user-id').value = id;
+    document.getElementById('edit-user-name').value = name;
+    document.getElementById('edit-user-email').value = email;
+    document.getElementById('edit-user-password').value = '';
+    document.getElementById('edit-user-role').value = role;
+    document.getElementById('edit-user-class').value = studentClass;
+    toggleEditUserFields();
+    openModal('edit-user-modal');
+}
+
+function toggleEditUserFields() {
+    const role = document.getElementById('edit-user-role').value;
+    const classGroup = document.getElementById('edit-user-class-group');
+    
+    if (role === 'student') {
+        classGroup.style.display = '';
+    } else {
+        classGroup.style.display = 'none';
+    }
+}
+
+function updateUser() {
+    const id = document.getElementById('edit-user-id').value;
+    const name = document.getElementById('edit-user-name').value;
+    const email = document.getElementById('edit-user-email').value;
+    const password = document.getElementById('edit-user-password').value;
+    const role = document.getElementById('edit-user-role').value;
+    const studentClass = document.getElementById('edit-user-class').value;
+    
+    if (!name || !email) {
+        showToast('Заполните все обязательные поля', 'error');
+        return;
+    }
+    
+    const data = {
+        name: name,
+        email: email,
+        role: role,
+        student_class: studentClass
+    };
+    
+    if (password) {
+        if (password.length < 6) {
+            showToast('Пароль должен быть минимум 6 символов', 'error');
+            return;
+        }
+        data.password = password;
+    }
+    
+    fetch(`/api/admin/user/${id}/update`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            showToast(data.message, 'success');
+            closeModal('edit-user-modal');
+            setTimeout(() => location.reload(), 500);
+        } else {
+            showToast(data.message, 'error');
+        }
+    });
+}
+
+// Delete User
+function confirmDeleteUser(id, name) {
+    document.getElementById('delete-user-id').value = id;
+    document.getElementById('delete-user-name').textContent = name;
+    openModal('delete-user-modal');
+}
+
+function deleteUser() {
+    const id = document.getElementById('delete-user-id').value;
+    
+    fetch(`/api/admin/user/${id}/delete`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            showToast(data.message, 'success');
+            closeModal('delete-user-modal');
+            document.querySelector(`[data-user-id="${id}"]`).remove();
+        } else {
+            showToast(data.message, 'error');
+        }
+    });
+}
+</script>
+{% endblock %}

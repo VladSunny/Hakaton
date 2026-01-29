@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+
+{% block title %}Заявки на закупку{% endblock %}
+
+{% block content %}
+<div class="page-top-spacing">
+    <div class="page-header">
+        <h2 class="page-title">Заявки на закупку</h2>
+    </div>
+</div>
+
+<div class="table-container">
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Продукт</th>
+                <th>Количество</th>
+                <th>Заявитель</th>
+                <th>Дата</th>
+                <th>Действия</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for req in requests %}
+            <tr id="request-{{ req.id }}">
+                <td class="font-medium">{{ req.product.name }}</td>
+                <td>{{ req.quantity }} {{ req.product.unit }}</td>
+                <td class="text-gray-500">{{ req.created_by }}</td>
+                <td class="text-gray-500">{{ req.created_at.strftime('%d.%m.%Y') }}</td>
+                <td>
+                    <button onclick="handleRequest({{ req.id }}, 'approve')" class="btn btn-success btn-sm mr-2">
+                        <i class="fas fa-check mr-1"></i>Одобрить
+                    </button>
+                    <button onclick="handleRequest({{ req.id }}, 'reject')" class="btn btn-danger btn-sm">
+                        <i class="fas fa-times mr-1"></i>Отклонить
+                    </button>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="5" class="text-center text-gray-500 py-8">Нет заявок на рассмотрении</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function handleRequest(requestId, action) {
+    fetch(`/api/request/${requestId}/${action}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            showToast(data.message, 'success');
+            document.getElementById(`request-${requestId}`).remove();
+        }
+    });
+}
+</script>
+{% endblock %}

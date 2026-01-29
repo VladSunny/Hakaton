@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Школьное Питание - АИС</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
+</head>
+<body class="auth-page">
+    <div class="auth-container">
+        <div class="auth-logo">🍽️</div>
+        <h1 class="auth-title">Школьное Питание</h1>
+        <p class="auth-subtitle">Автоматизированная информационная система</p>
+        
+        <div class="auth-buttons">
+            <a href="{{ url_for('login') }}" class="auth-btn">Войти</a>
+            <a href="{{ url_for('register') }}" class="auth-btn auth-btn-secondary">Регистрация</a>
+        </div>
+        
+        <div class="auth-demo">
+            <p class="auth-demo-title">Тестовые аккаунты:</p>
+            <p class="auth-demo-item">👨‍🎓 Ученик: student@school.ru / 123456</p>
+            <p class="auth-demo-item">👨‍🍳 Повар: cook@school.ru / 123456</p>
+            <p class="auth-demo-item">👨‍💼 Админ: admin@school.ru / 123456</p>
+        </div>
+    </div>
+</body>
+</html>

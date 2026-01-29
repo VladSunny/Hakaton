@@ -1,0 +1,308 @@
+{% extends 'base.html' %}
+
+{% block title %}Выдача блюд{% endblock %}
+
+{% block content %}
+<div class="page-top-spacing">
+    <div class="page-header">
+        <div class="serve-header">
+            <h2 class="page-title">Выдача блюд</h2>
+            <div class="serve-date-badge">
+                <span class="serve-date-icon">📅</span>
+                <span>{{ now.strftime('%d.%m.%Y') if now else 'Сегодня' }}</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Stats Summary -->
+<div class="serve-stats-row">
+    <div class="serve-stat-mini">
+        <span class="serve-stat-mini-icon">📊</span>
+        <span class="serve-stat-mini-label">Всего выдано:</span>
+        <span class="serve-stat-mini-value" id="total-served">{{ served.breakfast_count + served.lunch_count }}</span>
+    </div>
+</div>
+
+<!-- Counters Grid -->
+<div class="serve-counters-grid">
+    <!-- Breakfast Counter -->
+    <div class="serve-counter-card serve-counter-breakfast">
+        <div class="serve-counter-header">
+            <div class="serve-counter-icon-wrapper breakfast-icon">
+                <span class="serve-counter-emoji">☀️</span>
+            </div>
+            <div class="serve-counter-badge">Завтрак</div>
+        </div>
+        
+        <div class="serve-counter-body">
+            <div class="serve-counter-display">
+                <span id="breakfast-count" class="serve-counter-number">{{ served.breakfast_count }}</span>
+                <span class="serve-counter-unit">порций</span>
+            </div>
+            <p class="serve-counter-subtitle">выдано сегодня</p>
+        </div>
+        
+        <div class="serve-counter-actions">
+            <button onclick="serveMeal('breakfast', -1)" class="serve-btn serve-btn-minus">
+                <span>−</span>
+            </button>
+            <button onclick="serveMeal('breakfast', 1)" class="serve-btn serve-btn-plus breakfast-btn">
+                <span>+1</span>
+            </button>
+            <button onclick="serveMeal('breakfast', 5)" class="serve-btn serve-btn-multi breakfast-btn-light">
+                <span>+5</span>
+            </button>
+            <button onclick="serveMeal('breakfast', 10)" class="serve-btn serve-btn-multi breakfast-btn-lighter">
+                <span>+10</span>
+            </button>
+        </div>
+        
+        <div class="serve-counter-footer">
+            <div class="serve-time-info">
+                <span class="serve-time-icon">🕐</span>
+                <span>7:30 - 9:00</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lunch Counter -->
+    <div class="serve-counter-card serve-counter-lunch">
+        <div class="serve-counter-header">
+            <div class="serve-counter-icon-wrapper lunch-icon">
+                <span class="serve-counter-emoji">🍽️</span>
+            </div>
+            <div class="serve-counter-badge">Обед</div>
+        </div>
+        
+        <div class="serve-counter-body">
+            <div class="serve-counter-display">
+                <span id="lunch-count" class="serve-counter-number">{{ served.lunch_count }}</span>
+                <span class="serve-counter-unit">порций</span>
+            </div>
+            <p class="serve-counter-subtitle">выдано сегодня</p>
+        </div>
+        
+        <div class="serve-counter-actions">
+            <button onclick="serveMeal('lunch', -1)" class="serve-btn serve-btn-minus">
+                <span>−</span>
+            </button>
+            <button onclick="serveMeal('lunch', 1)" class="serve-btn serve-btn-plus lunch-btn">
+                <span>+1</span>
+            </button>
+            <button onclick="serveMeal('lunch', 5)" class="serve-btn serve-btn-multi lunch-btn-light">
+                <span>+5</span>
+            </button>
+            <button onclick="serveMeal('lunch', 10)" class="serve-btn serve-btn-multi lunch-btn-lighter">
+                <span>+10</span>
+            </button>
+        </div>
+        
+        <div class="serve-counter-footer">
+            <div class="serve-time-info">
+                <span class="serve-time-icon">🕐</span>
+                <span>12:00 - 14:00</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="serve-quick-actions">
+    <button onclick="resetCounters()" class="serve-quick-btn serve-quick-reset">
+        <span class="serve-quick-icon">🔄</span>
+        <span>Сбросить счётчики</span>
+    </button>
+    <a href="{{ url_for('cook_inventory') }}" class="serve-quick-btn serve-quick-inventory">
+        <span class="serve-quick-icon">📦</span>
+        <span>Проверить остатки</span>
+    </a>
+</div>
+
+<!-- Pending Orders Section -->
+<div class="serve-orders-section">
+    <div class="serve-orders-header">
+        <div class="serve-orders-title">
+            <span class="serve-orders-icon">📋</span>
+            <h3>Ожидающие заказы</h3>
+            {% if pending_orders %}
+            <span class="serve-orders-count">{{ pending_orders|length }}</span>
+            {% endif %}
+        </div>
+        {% if pending_orders %}
+        <button onclick="confirmAllOrders()" class="serve-confirm-all-btn">
+            <span>✓</span> Выдать все
+        </button>
+        {% endif %}
+    </div>
+    
+    <div class="serve-orders-body">
+        {% if pending_orders %}
+        <div class="serve-orders-list" id="pending-orders">
+            {% for order in pending_orders %}
+            <div class="serve-order-card" id="pending-order-{{ order.id }}">
+                <div class="serve-order-left">
+                    <div class="serve-order-avatar">
+                        {{ order.user.name.split()[0][0] }}{{ order.user.name.split()[-1][0] if order.user.name.split()|length > 1 else '' }}
+                    </div>
+                    <div class="serve-order-info">
+                        <div class="serve-order-name">{{ order.user.name }}</div>
+                        <div class="serve-order-class">{{ order.user.student_class or 'Класс не указан' }}</div>
+                        <div class="serve-order-items">
+                            {% for item in order.items %}
+                            <span class="serve-order-item-tag">{{ item.name }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                <div class="serve-order-right">
+                    <div class="serve-order-meta">
+                        <span class="serve-order-time">{{ order.created_at.strftime('%H:%M') }}</span>
+                        <span class="serve-order-type {% if order.meal_type == 'breakfast' %}type-breakfast{% else %}type-lunch{% endif %}">
+                            {% if order.meal_type == 'breakfast' %}☀️{% else %}🍽️{% endif %}
+                        </span>
+                    </div>
+                    <div class="serve-order-total">{{ order.total|int }} ₽</div>
+                    <button onclick="confirmOrder({{ order.id }})" class="serve-order-confirm-btn">
+                        <span>✓</span> Выдать
+                    </button>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="serve-orders-empty">
+            <div class="serve-empty-icon">✅</div>
+            <p class="serve-empty-title">Все заказы выданы!</p>
+            <p class="serve-empty-subtitle">Новые заказы появятся здесь автоматически</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Recent Activity -->
+<div class="serve-activity-section">
+    <div class="serve-activity-header">
+        <span class="serve-activity-icon">📝</span>
+        <h3>Последние действия</h3>
+    </div>
+    <div class="serve-activity-list" id="activity-log">
+        <div class="serve-activity-item">
+            <span class="activity-dot activity-dot-success"></span>
+            <span class="activity-text">Система готова к работе</span>
+            <span class="activity-time">сейчас</span>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function serveMeal(type, count) {
+    fetch(`/api/serve/${type}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ count: count })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            document.getElementById('breakfast-count').textContent = data.breakfast;
+            document.getElementById('lunch-count').textContent = data.lunch;
+            document.getElementById('total-served').textContent = data.breakfast + data.lunch;
+            
+            // Add activity log
+            addActivity(type === 'breakfast' ? '☀️ Завтрак' : '🍽️ Обед', count > 0 ? `+${count}` : count);
+            
+            if (count > 0) {
+                showToast(`${type === 'breakfast' ? 'Завтрак' : 'Обед'}: +${count}`, 'success');
+            }
+        }
+    });
+}
+
+function confirmOrder(orderId) {
+    fetch(`/api/order/${orderId}/confirm`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            const orderEl = document.getElementById(`pending-order-${orderId}`);
+            const name = orderEl.querySelector('.serve-order-name').textContent;
+            
+            orderEl.style.animation = 'slideOutRight 0.3s ease forwards';
+            setTimeout(() => {
+                orderEl.remove();
+                updateOrdersCount();
+            }, 300);
+            
+            addActivity(`✅ Заказ выдан: ${name}`, '');
+            showToast('Заказ выдан', 'success');
+        }
+    });
+}
+
+function confirmAllOrders() {
+    const orders = document.querySelectorAll('.serve-order-card');
+    orders.forEach((order, index) => {
+        const orderId = order.id.replace('pending-order-', '');
+        setTimeout(() => {
+            confirmOrder(orderId);
+        }, index * 200);
+    });
+}
+
+function resetCounters() {
+    if (confirm('Вы уверены, что хотите сбросить счётчики?')) {
+        // Reset both counters
+        serveMeal('breakfast', -parseInt(document.getElementById('breakfast-count').textContent));
+        serveMeal('lunch', -parseInt(document.getElementById('lunch-count').textContent));
+        addActivity('🔄 Счётчики сброшены', '');
+    }
+}
+
+function updateOrdersCount() {
+    const count = document.querySelectorAll('.serve-order-card').length;
+    const countBadge = document.querySelector('.serve-orders-count');
+    const confirmAllBtn = document.querySelector('.serve-confirm-all-btn');
+    
+    if (count === 0) {
+        if (countBadge) countBadge.remove();
+        if (confirmAllBtn) confirmAllBtn.remove();
+        
+        document.querySelector('.serve-orders-body').innerHTML = `
+            <div class="serve-orders-empty">
+                <div class="serve-empty-icon">✅</div>
+                <p class="serve-empty-title">Все заказы выданы!</p>
+                <p class="serve-empty-subtitle">Новые заказы появятся здесь автоматически</p>
+            </div>
+        `;
+    } else if (countBadge) {
+        countBadge.textContent = count;
+    }
+}
+
+function addActivity(action, value) {
+    const log = document.getElementById('activity-log');
+    const now = new Date();
+    const time = now.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+    
+    const item = document.createElement('div');
+    item.className = 'serve-activity-item';
+    item.innerHTML = `
+        <span class="activity-dot activity-dot-success"></span>
+        <span class="activity-text">${action} ${value}</span>
+        <span class="activity-time">${time}</span>
+    `;
+    
+    log.insertBefore(item, log.firstChild);
+    
+    // Keep only last 10 items
+    while (log.children.length > 10) {
+        log.removeChild(log.lastChild);
+    }
+}
+</script>
+{% endblock %}

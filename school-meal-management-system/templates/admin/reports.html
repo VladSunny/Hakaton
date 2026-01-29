@@ -1,0 +1,397 @@
+{% extends 'base.html' %}
+
+{% block title %}Отчёты{% endblock %}
+
+{% block content %}
+<div class="page-top-spacing">
+    <div class="page-header">
+        <div class="reports-header">
+            <div class="reports-header-left">
+                <h2 class="page-title">Отчёты</h2>
+                <p class="reports-subtitle">Аналитика и статистика школьного питания</p>
+            </div>
+            <div class="reports-header-actions">
+                <button onclick="exportReport()" class="btn btn-primary">
+                    <span>📥</span> Экспорт
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Key Metrics -->
+<div class="reports-metrics-grid">
+    <div class="reports-metric-card metric-revenue">
+        <div class="metric-card-header">
+            <div class="metric-icon-wrapper revenue-icon">
+                <span>💰</span>
+            </div>
+        </div>
+        <div class="metric-value">{{ total_revenue|int }} ₽</div>
+        <div class="metric-label">Общая выручка</div>
+        <div class="metric-comparison">
+            <span>За неделю: {{ week_revenue|int }} ₽</span>
+        </div>
+    </div>
+
+    <div class="reports-metric-card metric-orders">
+        <div class="metric-card-header">
+            <div class="metric-icon-wrapper orders-icon">
+                <span>🛒</span>
+            </div>
+        </div>
+        <div class="metric-value">{{ orders_count }}</div>
+        <div class="metric-label">Всего заказов</div>
+        <div class="metric-comparison">
+            <span>Получено: {{ received_count }} | Ожидает: {{ pending_count }}</span>
+        </div>
+    </div>
+
+    <div class="reports-metric-card metric-avg">
+        <div class="metric-card-header">
+            <div class="metric-icon-wrapper avg-icon">
+                <span>📊</span>
+            </div>
+        </div>
+        <div class="metric-value">{{ avg_check|int }} ₽</div>
+        <div class="metric-label">Средний чек</div>
+        <div class="metric-comparison">
+            <span>{{ items_per_order }} блюд на заказ</span>
+        </div>
+    </div>
+
+    <div class="reports-metric-card metric-students">
+        <div class="metric-card-header">
+            <div class="metric-icon-wrapper students-icon">
+                <span>🍽️</span>
+            </div>
+        </div>
+        <div class="metric-value">{{ total_meals }}</div>
+        <div class="metric-label">Всего порций</div>
+        <div class="metric-comparison">
+            <span>Завтраки + Обеды</span>
+        </div>
+    </div>
+</div>
+
+<!-- Meal Statistics -->
+<div class="reports-meals-section">
+    <div class="reports-section-header">
+        <div class="reports-section-title">
+            <span class="section-icon">🍽️</span>
+            <h3>Статистика по типам питания</h3>
+        </div>
+    </div>
+    
+    <div class="meals-stats-grid">
+        <div class="meal-stat-card breakfast-stat">
+            <div class="meal-stat-visual">
+                <div class="meal-stat-circle">
+                    {% set breakfast_percent = (breakfast_count / total_meals * 100) if total_meals > 0 else 0 %}
+                    <svg viewBox="0 0 100 100">
+                        <circle cx="50" cy="50" r="45" fill="none" stroke="#fef3c7" stroke-width="10"/>
+                        <circle cx="50" cy="50" r="45" fill="none" stroke="#f59e0b" stroke-width="10" 
+                                stroke-dasharray="{{ breakfast_percent * 2.83 }} 283"
+                                stroke-linecap="round" transform="rotate(-90 50 50)"/>
+                    </svg>
+                    <div class="meal-stat-circle-content">
+                        <span class="meal-stat-emoji">☀️</span>
+                    </div>
+                </div>
+            </div>
+            <div class="meal-stat-info">
+                <div class="meal-stat-value">{{ breakfast_count }}</div>
+                <div class="meal-stat-label">Завтраков</div>
+                <div class="meal-stat-percent">{{ breakfast_percent|int }}% от общего</div>
+            </div>
+            <div class="meal-stat-details">
+                <div class="meal-detail-item">
+                    <span class="detail-label">Выручка:</span>
+                    <span class="detail-value">{{ breakfast_revenue|int }} ₽</span>
+                </div>
+                <div class="meal-detail-item">
+                    <span class="detail-label">Ср. цена:</span>
+                    <span class="detail-value">{{ avg_breakfast_price|int }} ₽</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="meal-stat-card lunch-stat">
+            <div class="meal-stat-visual">
+                <div class="meal-stat-circle">
+                    {% set lunch_percent = (lunch_count / total_meals * 100) if total_meals > 0 else 0 %}
+                    <svg viewBox="0 0 100 100">
+                        <circle cx="50" cy="50" r="45" fill="none" stroke="#ffedd5" stroke-width="10"/>
+                        <circle cx="50" cy="50" r="45" fill="none" stroke="#f97316" stroke-width="10" 
+                                stroke-dasharray="{{ lunch_percent * 2.83 }} 283"
+                                stroke-linecap="round" transform="rotate(-90 50 50)"/>
+                    </svg>
+                    <div class="meal-stat-circle-content">
+                        <span class="meal-stat-emoji">🍽️</span>
+                    </div>
+                </div>
+            </div>
+            <div class="meal-stat-info">
+                <div class="meal-stat-value">{{ lunch_count }}</div>
+                <div class="meal-stat-label">Обедов</div>
+                <div class="meal-stat-percent">{{ lunch_percent|int }}% от общего</div>
+            </div>
+            <div class="meal-stat-details">
+                <div class="meal-detail-item">
+                    <span class="detail-label">Выручка:</span>
+                    <span class="detail-value">{{ lunch_revenue|int }} ₽</span>
+                </div>
+                <div class="meal-detail-item">
+                    <span class="detail-label">Ср. цена:</span>
+                    <span class="detail-value">{{ avg_lunch_price|int }} ₽</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="meal-stat-card total-stat">
+            <div class="meal-stat-visual">
+                <div class="meal-stat-circle total-circle">
+                    <svg viewBox="0 0 100 100">
+                        <circle cx="50" cy="50" r="45" fill="none" stroke="#e9d5ff" stroke-width="10"/>
+                        <circle cx="50" cy="50" r="45" fill="none" stroke="#7c3aed" stroke-width="10" 
+                                stroke-dasharray="283 0"
+                                stroke-linecap="round" transform="rotate(-90 50 50)"/>
+                    </svg>
+                    <div class="meal-stat-circle-content">
+                        <span class="meal-stat-emoji">📈</span>
+                    </div>
+                </div>
+            </div>
+            <div class="meal-stat-info">
+                <div class="meal-stat-value">{{ total_meals }}</div>
+                <div class="meal-stat-label">Всего порций</div>
+                <div class="meal-stat-percent">100%</div>
+            </div>
+            <div class="meal-stat-details">
+                <div class="meal-detail-item">
+                    <span class="detail-label">Выручка:</span>
+                    <span class="detail-value">{{ total_revenue|int }} ₽</span>
+                </div>
+                <div class="meal-detail-item">
+                    <span class="detail-label">Ср. чек:</span>
+                    <span class="detail-value">{{ avg_check|int }} ₽</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Orders History -->
+<div class="reports-card reports-orders-card">
+    <div class="reports-card-header">
+        <div class="reports-card-title">
+            <span>🧾</span>
+            <h3>История заказов</h3>
+        </div>
+        <div class="orders-filter">
+            <button class="filter-btn active" onclick="filterOrders('all')">Все</button>
+            <button class="filter-btn" onclick="filterOrders('received')">Получено</button>
+            <button class="filter-btn" onclick="filterOrders('pending')">Ожидает</button>
+        </div>
+    </div>
+    <div class="reports-card-body">
+        {% if recent_orders %}
+        <div class="orders-table-wrapper">
+            <table class="orders-table">
+                <thead>
+                    <tr>
+                        <th>Заказ</th>
+                        <th>Ученик</th>
+                        <th>Тип</th>
+                        <th>Сумма</th>
+                        <th>Дата</th>
+                        <th>Статус</th>
+                    </tr>
+                </thead>
+                <tbody id="orders-table-body">
+                    {% for order in recent_orders %}
+                    <tr class="order-row" data-status="{{ order.status }}">
+                        <td>
+                            <span class="order-id">#{{ order.id }}</span>
+                        </td>
+                        <td>
+                            <div class="order-user">
+                                <div class="order-user-avatar">
+                                    {{ order.user.name.split()[0][0] }}{{ order.user.name.split()[-1][0] if order.user.name.split()|length > 1 else '' }}
+                                </div>
+                                <div class="order-user-info">
+                                    <span class="order-user-name">{{ order.user.name }}</span>
+                                    <span class="order-user-class">{{ order.user.student_class or 'Не указан' }}</span>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="order-type {% if order.meal_type == 'breakfast' %}type-breakfast{% else %}type-lunch{% endif %}">
+                                {% if order.meal_type == 'breakfast' %}☀️ Завтрак{% else %}🍽️ Обед{% endif %}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="order-amount">{{ order.total|int }} ₽</span>
+                        </td>
+                        <td>
+                            <div class="order-date">
+                                <span class="date-day">{{ order.created_at.strftime('%d.%m') }}</span>
+                                <span class="date-time">{{ order.created_at.strftime('%H:%M') }}</span>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="order-status {% if order.status == 'received' %}status-received{% else %}status-pending{% endif %}">
+                                {% if order.status == 'received' %}
+                                <span class="status-icon">✓</span> Получено
+                                {% else %}
+                                <span class="status-icon">⏳</span> Ожидает
+                                {% endif %}
+                            </span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="reports-empty">
+            <span class="empty-icon">📭</span>
+            <p>Нет заказов за выбранный период</p>
+        </div>
+        {% endif %}
+    </div>
+    {% if recent_orders %}
+    <div class="reports-card-footer">
+        <div class="orders-summary">
+            <span>Показано {{ recent_orders|length }} последних заказов из {{ orders_count }}</span>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Export Options -->
+<div class="reports-export-section">
+    <div class="export-title">
+        <span>📥</span>
+        <h3>Экспорт данных</h3>
+    </div>
+    <div class="export-options">
+        <button onclick="exportReport('txt')" class="export-option-btn">
+            <span class="export-icon">📄</span>
+            <span class="export-format">TXT</span>
+            <span class="export-desc">Текстовый отчёт</span>
+        </button>
+        <button onclick="exportReport('csv')" class="export-option-btn">
+            <span class="export-icon">📊</span>
+            <span class="export-format">CSV</span>
+            <span class="export-desc">Таблица данных</span>
+        </button>
+        <button onclick="printReport()" class="export-option-btn">
+            <span class="export-icon">🖨️</span>
+            <span class="export-format">Печать</span>
+            <span class="export-desc">Версия для печати</span>
+        </button>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Filter buttons
+function filterOrders(status) {
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    event.target.classList.add('active');
+    
+    document.querySelectorAll('.order-row').forEach(row => {
+        if (status === 'all') {
+            row.style.display = '';
+        } else if (row.dataset.status === status) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    });
+}
+
+function exportReport(format) {
+    const data = {
+        total_revenue: {{ total_revenue|int }},
+        orders_count: {{ orders_count }},
+        avg_check: {{ avg_check|int }},
+        breakfast_count: {{ breakfast_count }},
+        lunch_count: {{ lunch_count }},
+        total_meals: {{ total_meals }},
+        breakfast_revenue: {{ breakfast_revenue|int }},
+        lunch_revenue: {{ lunch_revenue|int }},
+        received_count: {{ received_count }},
+        pending_count: {{ pending_count }}
+    };
+    
+    if (format === 'csv') {
+        const csv = `Показатель,Значение
+Общая выручка,${data.total_revenue} ₽
+Всего заказов,${data.orders_count}
+Средний чек,${data.avg_check} ₽
+Завтраков,${data.breakfast_count}
+Обедов,${data.lunch_count}
+Всего порций,${data.total_meals}
+Выручка завтраки,${data.breakfast_revenue} ₽
+Выручка обеды,${data.lunch_revenue} ₽
+Получено заказов,${data.received_count}
+Ожидает получения,${data.pending_count}`;
+        
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `report_${new Date().toISOString().split('T')[0]}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+        showToast('CSV отчёт скачан', 'success');
+    } else {
+        const report = `
+╔══════════════════════════════════════════╗
+║         ОТЧЁТ ПО ШКОЛЬНОМУ ПИТАНИЮ       ║
+╠══════════════════════════════════════════╣
+║  Дата формирования: ${new Date().toLocaleDateString('ru-RU')}
+╠══════════════════════════════════════════╣
+║  📊 ОСНОВНЫЕ ПОКАЗАТЕЛИ
+║  ────────────────────────────────────────
+║  💰 Общая выручка:       ${data.total_revenue} ₽
+║  🛒 Всего заказов:       ${data.orders_count}
+║  📈 Средний чек:         ${data.avg_check} ₽
+╠══════════════════════════════════════════╣
+║  🍽️ СТАТИСТИКА ПИТАНИЯ
+║  ────────────────────────────────────────
+║  ☀️ Завтраков:           ${data.breakfast_count}
+║     Выручка:             ${data.breakfast_revenue} ₽
+║  🍽️ Обедов:              ${data.lunch_count}
+║     Выручка:             ${data.lunch_revenue} ₽
+║  📦 Всего порций:        ${data.total_meals}
+╠══════════════════════════════════════════╣
+║  📋 СТАТУС ЗАКАЗОВ
+║  ────────────────────────────────────────
+║  ✓ Получено:             ${data.received_count}
+║  ⏳ Ожидает:              ${data.pending_count}
+╚══════════════════════════════════════════╝
+`;
+        
+        const blob = new Blob([report], { type: 'text/plain;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `report_${new Date().toISOString().split('T')[0]}.txt`;
+        a.click();
+        URL.revokeObjectURL(url);
+        showToast('Отчёт скачан', 'success');
+    }
+}
+
+function printReport() {
+    window.print();
+    showToast('Подготовка к печати...', 'info');
+}
+</script>
+{% endblock %}

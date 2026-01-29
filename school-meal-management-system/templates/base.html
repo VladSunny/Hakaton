@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#7c3aed">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>{% block title %}Школьное Питание{% endblock %} - АИС</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/mobile.css') }}">
+    {% block styles %}{% endblock %}
+</head>
+<body class="body-bg">
+    {% if current_user.is_authenticated %}
+    <!-- Mobile Navigation Overlay -->
+    <div id="mobile-nav-overlay" class="mobile-nav-overlay" onclick="closeMobileNav()"></div>
+    
+    <!-- Mobile Navigation Sidebar -->
+    <nav id="mobile-nav" class="mobile-nav">
+        <button class="mobile-nav-close" onclick="closeMobileNav()">✕</button>
+        <div class="mobile-nav-header">
+            <div class="mobile-nav-user">
+                <div class="mobile-nav-avatar">👤</div>
+                <div class="mobile-nav-info">
+                    <h3>{{ current_user.name }}</h3>
+                    <p>
+                        {% if current_user.role == 'student' %}Ученик{% elif current_user.role == 'cook' %}Повар{% else %}Администратор{% endif %}
+                        {% if current_user.student_class %} • {{ current_user.student_class }}{% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="mobile-nav-links">
+            {% if current_user.role == 'student' %}
+            <a href="{{ url_for('student_menu') }}" class="mobile-nav-link {% if request.endpoint == 'student_menu' %}active{% endif %}">
+                <span class="nav-icon">🍽️</span> Меню
+            </a>
+            <a href="{{ url_for('student_orders') }}" class="mobile-nav-link {% if request.endpoint == 'student_orders' %}active{% endif %}">
+                <span class="nav-icon">🛒</span> Мои заказы
+            </a>
+            <a href="{{ url_for('student_payment') }}" class="mobile-nav-link {% if request.endpoint == 'student_payment' %}active{% endif %}">
+                <span class="nav-icon">💳</span> Оплата
+            </a>
+            <a href="{{ url_for('student_profile') }}" class="mobile-nav-link {% if request.endpoint == 'student_profile' %}active{% endif %}">
+                <span class="nav-icon">👤</span> Профиль
+            </a>
+            {% elif current_user.role == 'cook' %}
+            <a href="{{ url_for('cook_serve') }}" class="mobile-nav-link {% if request.endpoint == 'cook_serve' %}active{% endif %}">
+                <span class="nav-icon">🛎️</span> Выдача блюд
+            </a>
+            <a href="{{ url_for('cook_inventory') }}" class="mobile-nav-link {% if request.endpoint == 'cook_inventory' %}active{% endif %}">
+                <span class="nav-icon">📦</span> Остатки
+            </a>
+            <a href="{{ url_for('cook_purchase') }}" class="mobile-nav-link {% if request.endpoint == 'cook_purchase' %}active{% endif %}">
+                <span class="nav-icon">🛒</span> Закупки
+            </a>
+            {% elif current_user.role == 'admin' %}
+            <a href="{{ url_for('admin_dashboard') }}" class="mobile-nav-link {% if request.endpoint == 'admin_dashboard' %}active{% endif %}">
+                <span class="nav-icon">📊</span> Статистика
+            </a>
+            <a href="{{ url_for('admin_requests') }}" class="mobile-nav-link {% if request.endpoint == 'admin_requests' %}active{% endif %}">
+                <span class="nav-icon">📋</span> Заявки
+            </a>
+            <a href="{{ url_for('admin_reports') }}" class="mobile-nav-link {% if request.endpoint == 'admin_reports' %}active{% endif %}">
+                <span class="nav-icon">📄</span> Отчёты
+            </a>
+            <a href="{{ url_for('admin_users') }}" class="mobile-nav-link {% if request.endpoint == 'admin_users' %}active{% endif %}">
+                <span class="nav-icon">👥</span> Пользователи
+            </a>
+            {% endif %}
+            <div class="mobile-nav-divider"></div>
+            <a href="{{ url_for('logout') }}" class="mobile-nav-link">
+                <span class="nav-icon">🚪</span> Выйти
+            </a>
+        </div>
+    </nav>
+
+    <!-- Header -->
+    <header class="header">
+        <div class="header-container">
+            <div class="header-content">
+                <!-- Mobile menu button -->
+                <button class="mobile-menu-btn" onclick="openMobileNav()">☰</button>
+                
+                <div class="header-logo">
+                    <div class="header-logo-icon">🍽️</div>
+                    <div class="header-title">
+                        <h1>Школьное Питание</h1>
+                        <p>
+                            {% if current_user.role == 'student' %}Ученик{% elif current_user.role == 'cook' %}Повар{% else %}Администратор{% endif %}
+                            {% if current_user.student_class %} • {{ current_user.student_class }}{% endif %}
+                        </p>
+                    </div>
+                </div>
+                <div class="header-actions">
+                    <!-- Notifications -->
+                    <div class="header-notifications">
+                        <button onclick="toggleNotifications()" class="header-btn">
+                            <span>🔔</span>
+                            <span id="notification-badge" class="notification-badge hidden">0</span>
+                        </button>
+                        <div id="notifications-dropdown" class="notifications-dropdown hidden">
+                            <div class="notifications-header">
+                                <h3>Уведомления</h3>
+                            </div>
+                            <div id="notifications-list" class="notifications-list">
+                                <p class="notifications-empty">Загрузка...</p>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- User Info (hidden on mobile) -->
+                    <div class="header-user-info">
+                        <span class="header-user-avatar">👤</span>
+                        <span class="header-user-name">{{ current_user.name }}</span>
+                    </div>
+                    <!-- Logout Button -->
+                    <a href="{{ url_for('logout') }}" class="header-logout" title="Выйти">🚪</a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Desktop Navigation -->
+    <nav class="desktop-nav">
+        <div class="nav-container">
+            <div class="nav-tabs">
+                {% if current_user.role == 'student' %}
+                <a href="{{ url_for('student_menu') }}" class="nav-tab {% if request.endpoint == 'student_menu' %}active{% endif %}">
+                    <span class="nav-icon">🍽️</span> Меню
+                </a>
+                <a href="{{ url_for('student_orders') }}" class="nav-tab {% if request.endpoint == 'student_orders' %}active{% endif %}">
+                    <span class="nav-icon">🛒</span> Мои заказы
+                </a>
+                <a href="{{ url_for('student_payment') }}" class="nav-tab {% if request.endpoint == 'student_payment' %}active{% endif %}">
+                    <span class="nav-icon">💳</span> Оплата
+                </a>
+                <a href="{{ url_for('student_profile') }}" class="nav-tab {% if request.endpoint == 'student_profile' %}active{% endif %}">
+                    <span class="nav-icon">👤</span> Профиль
+                </a>
+                {% elif current_user.role == 'cook' %}
+                <a href="{{ url_for('cook_serve') }}" class="nav-tab {% if request.endpoint == 'cook_serve' %}active{% endif %}">
+                    <span class="nav-icon">🛎️</span> Выдача блюд
+                </a>
+                <a href="{{ url_for('cook_inventory') }}" class="nav-tab {% if request.endpoint == 'cook_inventory' %}active{% endif %}">
+                    <span class="nav-icon">📦</span> Остатки
+                </a>
+                <a href="{{ url_for('cook_purchase') }}" class="nav-tab {% if request.endpoint == 'cook_purchase' %}active{% endif %}">
+                    <span class="nav-icon">🛒</span> Закупки
+                </a>
+                {% elif current_user.role == 'admin' %}
+                <a href="{{ url_for('admin_dashboard') }}" class="nav-tab {% if request.endpoint == 'admin_dashboard' %}active{% endif %}">
+                    <span class="nav-icon">📊</span> Статистика
+                </a>
+                <a href="{{ url_for('admin_requests') }}" class="nav-tab {% if request.endpoint == 'admin_requests' %}active{% endif %}">
+                    <span class="nav-icon">📋</span> Заявки
+                </a>
+                <a href="{{ url_for('admin_reports') }}" class="nav-tab {% if request.endpoint == 'admin_reports' %}active{% endif %}">
+                    <span class="nav-icon">📄</span> Отчёты
+                </a>
+                <a href="{{ url_for('admin_users') }}" class="nav-tab {% if request.endpoint == 'admin_users' %}active{% endif %}">
+                    <span class="nav-icon">👥</span> Пользователи
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+    {% endif %}
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div class="flash-container">
+        {% for category, message in messages %}
+        <div class="alert alert-{{ category }} slide-in">
+            {{ message }}
+            <button onclick="this.parentElement.remove()" class="alert-close">×</button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% endwith %}
+
+    <!-- Main Content -->
+    <main class="main-container">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Bottom Navigation (Mobile) -->
+    {% if current_user.is_authenticated %}
+    <nav class="bottom-nav">
+        <div class="bottom-nav-container">
+            {% if current_user.role == 'student' %}
+            <a href="{{ url_for('student_menu') }}" class="bottom-nav-item {% if request.endpoint == 'student_menu' %}active{% endif %}">
+                <span class="bottom-nav-icon">🍽️</span>
+                <span>Меню</span>
+            </a>
+            <a href="{{ url_for('student_orders') }}" class="bottom-nav-item {% if request.endpoint == 'student_orders' %}active{% endif %}">
+                <span class="bottom-nav-icon">🧾</span>
+                <span>Заказы</span>
+            </a>
+            <a href="{{ url_for('student_payment') }}" class="bottom-nav-item {% if request.endpoint == 'student_payment' %}active{% endif %}">
+                <span class="bottom-nav-icon">💳</span>
+                <span>Оплата</span>
+            </a>
+            <a href="{{ url_for('student_profile') }}" class="bottom-nav-item {% if request.endpoint == 'student_profile' %}active{% endif %}">
+                <span class="bottom-nav-icon">👤</span>
+                <span>Профиль</span>
+            </a>
+            {% elif current_user.role == 'cook' %}
+            <a href="{{ url_for('cook_serve') }}" class="bottom-nav-item {% if request.endpoint == 'cook_serve' %}active{% endif %}">
+                <span class="bottom-nav-icon">🛎️</span>
+                <span>Выдача</span>
+            </a>
+            <a href="{{ url_for('cook_inventory') }}" class="bottom-nav-item {% if request.endpoint == 'cook_inventory' %}active{% endif %}">
+                <span class="bottom-nav-icon">📦</span>
+                <span>Остатки</span>
+            </a>
+            <a href="{{ url_for('cook_purchase') }}" class="bottom-nav-item {% if request.endpoint == 'cook_purchase' %}active{% endif %}">
+                <span class="bottom-nav-icon">🛒</span>
+                <span>Закупки</span>
+            </a>
+            {% elif current_user.role == 'admin' %}
+            <a href="{{ url_for('admin_dashboard') }}" class="bottom-nav-item {% if request.endpoint == 'admin_dashboard' %}active{% endif %}">
+                <span class="bottom-nav-icon">📊</span>
+                <span>Статистика</span>
+            </a>
+            <a href="{{ url_for('admin_requests') }}" class="bottom-nav-item {% if request.endpoint == 'admin_requests' %}active{% endif %}">
+                <span class="bottom-nav-icon">📋</span>
+                <span>Заявки</span>
+            </a>
+            <a href="{{ url_for('admin_reports') }}" class="bottom-nav-item {% if request.endpoint == 'admin_reports' %}active{% endif %}">
+                <span class="bottom-nav-icon">📄</span>
+                <span>Отчёты</span>
+            </a>
+            <a href="{{ url_for('admin_users') }}" class="bottom-nav-item {% if request.endpoint == 'admin_users' %}active{% endif %}">
+                <span class="bottom-nav-icon">👥</span>
+                <span>Люди</span>
+            </a>
+            {% endif %}
+        </div>
+    </nav>
+    {% endif %}
+
+    <!-- Toast -->
+    <div id="toast" class="toast hidden"></div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

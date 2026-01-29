@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Вход - Школьное Питание</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
+</head>
+<body class="auth-page">
+    <div class="auth-container">
+        <div class="auth-logo">🍽️</div>
+        <h1 class="auth-title">Школьное Питание</h1>
+        <p class="auth-subtitle">Автоматизированная информационная система</p>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div class="auth-alert auth-alert-{{ category }}">
+            {{ message }}
+        </div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+
+        <form method="POST" action="{{ url_for('login') }}" class="auth-form">
+            <div class="auth-form-group">
+                <label class="auth-label">Email</label>
+                <input type="email" name="email" required class="auth-input" placeholder="email@school.ru">
+            </div>
+            <div class="auth-form-group">
+                <label class="auth-label">Пароль</label>
+                <input type="password" name="password" required class="auth-input" placeholder="••••••••">
+            </div>
+            <button type="submit" class="auth-btn">Войти</button>
+        </form>
+
+        <p class="auth-link">
+            Нет аккаунта? <a href="{{ url_for('register') }}">Регистрация</a>
+        </p>
+
+        <div class="auth-demo">
+            <p class="auth-demo-title">Тестовые аккаунты:</p>
+            <p class="auth-demo-item">👨‍🎓 Ученик: student@school.ru / 123456</p>
+            <p class="auth-demo-item">👨‍🍳 Повар: cook@school.ru / 123456</p>
+            <p class="auth-demo-item">👨‍💼 Админ: admin@school.ru / 123456</p>
+        </div>
+    </div>
+</body>
+</html>

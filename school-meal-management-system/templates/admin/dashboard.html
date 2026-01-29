@@ -1,0 +1,382 @@
+{% extends 'base.html' %}
+
+{% block title %}Статистика{% endblock %}
+
+{% block content %}
+<div class="page-top-spacing">
+    <div class="page-header">
+        <div class="stats-page-header">
+            <h2 class="page-title">Статистика</h2>
+            <div class="stats-header-badges">
+                <div class="stats-date-badge">
+                    <span>📅</span>
+                    <span>{{ now.strftime('%d.%m.%Y') if now else 'Сегодня' }}</span>
+                </div>
+                <div class="stats-live-badge">
+                    <span class="live-dot"></span>
+                    <span>Live</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Main Stats Cards -->
+<div class="stats-main-grid">
+    <!-- Today Orders -->
+    <div class="stats-card stats-card-purple">
+        <div class="stats-card-bg-pattern"></div>
+        <div class="stats-card-content">
+            <div class="stats-card-icon">
+                <span>🛒</span>
+            </div>
+            <div class="stats-card-info">
+                <span class="stats-card-value">{{ today_orders }}</span>
+                <span class="stats-card-label">Заказов сегодня</span>
+            </div>
+        </div>
+        <div class="stats-card-footer">
+            {% if orders_change > 0 %}
+            <span class="stats-trend stats-trend-up">↑ {{ orders_change }}%</span>
+            {% elif orders_change < 0 %}
+            <span class="stats-trend stats-trend-down">↓ {{ orders_change|abs }}%</span>
+            {% else %}
+            <span class="stats-trend stats-trend-neutral">→ 0%</span>
+            {% endif %}
+            <span class="stats-trend-label">vs вчера</span>
+        </div>
+    </div>
+
+    <!-- Total Revenue -->
+    <div class="stats-card stats-card-green">
+        <div class="stats-card-bg-pattern"></div>
+        <div class="stats-card-content">
+            <div class="stats-card-icon">
+                <span>💰</span>
+            </div>
+            <div class="stats-card-info">
+                <span class="stats-card-value">{{ total_revenue|int }} ₽</span>
+                <span class="stats-card-label">Общая выручка</span>
+            </div>
+        </div>
+        <div class="stats-card-footer">
+            <span class="stats-trend stats-trend-up">{{ total_orders }} заказов</span>
+            <span class="stats-trend-label">всего</span>
+        </div>
+    </div>
+
+    <!-- Students -->
+    <div class="stats-card stats-card-blue">
+        <div class="stats-card-bg-pattern"></div>
+        <div class="stats-card-content">
+            <div class="stats-card-icon">
+                <span>👥</span>
+            </div>
+            <div class="stats-card-info">
+                <span class="stats-card-value">{{ students_count }}</span>
+                <span class="stats-card-label">Учеников</span>
+            </div>
+        </div>
+        <div class="stats-card-footer">
+            <span class="stats-trend stats-trend-ok">активных</span>
+            <span class="stats-trend-label">в системе</span>
+        </div>
+    </div>
+
+    <!-- Pending Requests -->
+    <div class="stats-card stats-card-orange">
+        <div class="stats-card-bg-pattern"></div>
+        <div class="stats-card-content">
+            <div class="stats-card-icon">
+                <span>📋</span>
+            </div>
+            <div class="stats-card-info">
+                <span class="stats-card-value">{{ pending_requests }}</span>
+                <span class="stats-card-label">Заявок на закупку</span>
+            </div>
+        </div>
+        <div class="stats-card-footer">
+            {% if pending_requests > 0 %}
+            <span class="stats-trend stats-trend-warning">⚠️ Требуют внимания</span>
+            {% else %}
+            <span class="stats-trend stats-trend-ok">✓ Всё обработано</span>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Quick Metrics Row -->
+<div class="quick-metrics-row">
+    <div class="quick-metric">
+        <span class="quick-metric-icon">☀️</span>
+        <div class="quick-metric-info">
+            <span class="quick-metric-value">{{ breakfast_count }}</span>
+            <span class="quick-metric-label">Завтраков</span>
+        </div>
+    </div>
+    <div class="quick-metric">
+        <span class="quick-metric-icon">🍽️</span>
+        <div class="quick-metric-info">
+            <span class="quick-metric-value">{{ lunch_count }}</span>
+            <span class="quick-metric-label">Обедов</span>
+        </div>
+    </div>
+    <div class="quick-metric">
+        <span class="quick-metric-icon">⭐</span>
+        <div class="quick-metric-info">
+            <span class="quick-metric-value">{{ avg_rating if avg_rating > 0 else '—' }}</span>
+            <span class="quick-metric-label">Рейтинг</span>
+        </div>
+    </div>
+    <div class="quick-metric">
+        <span class="quick-metric-icon">🎫</span>
+        <div class="quick-metric-info">
+            <span class="quick-metric-value">{{ subscriptions_count }}</span>
+            <span class="quick-metric-label">Абонементов</span>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Section -->
+<div class="stats-charts-grid">
+    <!-- Weekly Chart -->
+    <div class="stats-chart-card">
+        <div class="stats-chart-header">
+            <div class="stats-chart-title">
+                <span class="stats-chart-icon">📈</span>
+                <h3>Динамика заказов за неделю</h3>
+            </div>
+        </div>
+        <div class="stats-chart-body">
+            <div class="chart-container">
+                {% for day in weekly_orders %}
+                <div class="chart-bar-wrapper">
+                    <div class="chart-bar-value">{{ day.count }}</div>
+                    <div class="chart-bar-track">
+                        <div class="chart-bar-fill {% if day.count == max_weekly and day.count > 0 %}chart-bar-max{% endif %}" 
+                             style="height: {{ (day.count / max_weekly * 100) if max_weekly > 0 else 0 }}%"></div>
+                    </div>
+                    <div class="chart-bar-label">{{ day.day }}</div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        <div class="stats-chart-footer">
+            <div class="chart-legend">
+                <span class="legend-item">
+                    <span class="legend-dot legend-dot-purple"></span>
+                    Всего заказов: <strong>{{ total_orders }}</strong>
+                </span>
+                <span class="legend-item">
+                    <span class="legend-dot legend-dot-green"></span>
+                    Выручка: <strong>{{ total_revenue|int }} ₽</strong>
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Meal Distribution -->
+    <div class="stats-chart-card">
+        <div class="stats-chart-header">
+            <div class="stats-chart-title">
+                <span class="stats-chart-icon">🥧</span>
+                <h3>Распределение питания</h3>
+            </div>
+        </div>
+        <div class="stats-chart-body">
+            <div class="pie-chart-container">
+                <div class="pie-chart">
+                    {% set total = breakfast_count + lunch_count %}
+                    {% set breakfast_percent = (breakfast_count / total * 100) if total > 0 else 0 %}
+                    {% set lunch_percent = (lunch_count / total * 100) if total > 0 else 0 %}
+                    <div class="pie-chart-circle">
+                        <svg viewBox="0 0 100 100">
+                            <circle cx="50" cy="50" r="40" fill="none" stroke="#e5e7eb" stroke-width="20"/>
+                            {% if total > 0 %}
+                            <circle cx="50" cy="50" r="40" fill="none" stroke="#f59e0b" stroke-width="20" 
+                                    stroke-dasharray="{{ breakfast_percent * 2.51 }} 251" stroke-dashoffset="0" transform="rotate(-90 50 50)"/>
+                            <circle cx="50" cy="50" r="40" fill="none" stroke="#f97316" stroke-width="20" 
+                                    stroke-dasharray="{{ lunch_percent * 2.51 }} 251" stroke-dashoffset="{{ -breakfast_percent * 2.51 }}" transform="rotate(-90 50 50)"/>
+                            {% endif %}
+                        </svg>
+                        <div class="pie-chart-center">
+                            <span class="pie-total">{{ total }}</span>
+                            <span class="pie-label">порций</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="pie-legend">
+                    <div class="pie-legend-item">
+                        <span class="pie-legend-color pie-legend-yellow"></span>
+                        <div class="pie-legend-info">
+                            <span class="pie-legend-label">Завтраки</span>
+                            <span class="pie-legend-value">{{ breakfast_count }} ({{ breakfast_percent|int }}%)</span>
+                        </div>
+                    </div>
+                    <div class="pie-legend-item">
+                        <span class="pie-legend-color pie-legend-orange"></span>
+                        <div class="pie-legend-info">
+                            <span class="pie-legend-label">Обеды</span>
+                            <span class="pie-legend-value">{{ lunch_count }} ({{ lunch_percent|int }}%)</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Activity Section -->
+<div class="stats-activity-section">
+    <div class="stats-activity-grid">
+        <!-- Recent Orders -->
+        <div class="stats-activity-card">
+            <div class="stats-activity-header">
+                <div class="stats-activity-title">
+                    <span>🧾</span>
+                    <h3>Последние заказы</h3>
+                </div>
+                <a href="{{ url_for('admin_reports') }}" class="stats-view-all">
+                    Все →
+                </a>
+            </div>
+            <div class="stats-activity-body">
+                {% if recent_orders %}
+                <div class="recent-orders-list">
+                    {% for order in recent_orders %}
+                    <div class="recent-order-item">
+                        <div class="recent-order-avatar">
+                            {{ order.user.name.split()[0][0] }}{{ order.user.name.split()[-1][0] if order.user.name.split()|length > 1 else '' }}
+                        </div>
+                        <div class="recent-order-info">
+                            <span class="recent-order-name">{{ order.user.name }}</span>
+                            <span class="recent-order-meta">
+                                {{ order.items|length }} поз. • {{ order.created_at.strftime('%H:%M') }}
+                            </span>
+                        </div>
+                        <div class="recent-order-right">
+                            <span class="recent-order-amount">{{ order.total|int }} ₽</span>
+                            <span class="recent-order-status {% if order.status == 'received' %}status-done{% else %}status-pending{% endif %}">
+                                {% if order.status == 'received' %}✓{% else %}⏳{% endif %}
+                            </span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="stats-empty">
+                    <span class="stats-empty-icon">📭</span>
+                    <p>Нет заказов</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Top Dishes -->
+        <div class="stats-activity-card">
+            <div class="stats-activity-header">
+                <div class="stats-activity-title">
+                    <span>🏆</span>
+                    <h3>Популярные блюда</h3>
+                </div>
+            </div>
+            <div class="stats-activity-body">
+                {% if popular %}
+                <div class="top-dishes-list">
+                    {% for dish in popular %}
+                    <div class="top-dish-item">
+                        <span class="top-dish-rank {% if loop.index == 1 %}gold{% elif loop.index == 2 %}silver{% elif loop.index == 3 %}bronze{% endif %}">
+                            {{ loop.index }}
+                        </span>
+                        <div class="top-dish-info">
+                            <span class="top-dish-name">{{ dish[0] }}</span>
+                            <div class="top-dish-bar">
+                                <div class="top-dish-fill" style="width: {{ (dish[1] / max_popular * 100)|int }}%"></div>
+                            </div>
+                        </div>
+                        <span class="top-dish-count">{{ dish[1] }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="stats-empty">
+                    <span class="stats-empty-icon">📭</span>
+                    <p>Нет данных о популярных блюдах</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="stats-quick-actions">
+    <a href="{{ url_for('admin_reports') }}" class="stats-action-btn">
+        <span class="stats-action-icon">📊</span>
+        <span>Полный отчёт</span>
+    </a>
+    <a href="{{ url_for('admin_requests') }}" class="stats-action-btn">
+        <span class="stats-action-icon">📋</span>
+        <span>Заявки ({{ pending_requests }})</span>
+    </a>
+    <a href="{{ url_for('admin_users') }}" class="stats-action-btn">
+        <span class="stats-action-icon">👥</span>
+        <span>Пользователи</span>
+    </a>
+    <button onclick="exportDashboard()" class="stats-action-btn stats-action-primary">
+        <span class="stats-action-icon">📥</span>
+        <span>Экспорт</span>
+    </button>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function exportDashboard() {
+    const data = {
+        date: new Date().toLocaleDateString('ru-RU'),
+        today_orders: {{ today_orders }},
+        total_orders: {{ total_orders }},
+        total_revenue: {{ total_revenue|int }},
+        students_count: {{ students_count }},
+        pending_requests: {{ pending_requests }},
+        breakfast_count: {{ breakfast_count }},
+        lunch_count: {{ lunch_count }},
+        subscriptions_count: {{ subscriptions_count }},
+        avg_rating: {{ avg_rating }}
+    };
+    
+    const report = `
+╔══════════════════════════════════════════╗
+║     СТАТИСТИКА ШКОЛЬНОГО ПИТАНИЯ         ║
+╠══════════════════════════════════════════╣
+║  Дата: ${data.date}
+╠══════════════════════════════════════════╣
+║  📊 ОСНОВНЫЕ ПОКАЗАТЕЛИ
+║  ────────────────────────────────────────
+║  🛒 Заказов сегодня:     ${data.today_orders}
+║  🛒 Заказов всего:       ${data.total_orders}
+║  💰 Общая выручка:       ${data.total_revenue} ₽
+║  👥 Учеников:            ${data.students_count}
+║  📋 Заявок на закупку:   ${data.pending_requests}
+╠══════════════════════════════════════════╣
+║  🍽️ ПИТАНИЕ
+║  ────────────────────────────────────────
+║  ☀️ Завтраков:           ${data.breakfast_count}
+║  🍽️ Обедов:              ${data.lunch_count}
+║  🎫 Абонементов:         ${data.subscriptions_count}
+║  ⭐ Средний рейтинг:     ${data.avg_rating}
+╚══════════════════════════════════════════╝
+    `;
+    
+    const blob = new Blob([report], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `statistics_${new Date().toISOString().split('T')[0]}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast('Статистика экспортирована', 'success');
+}
+</script>
+{% endblock %}

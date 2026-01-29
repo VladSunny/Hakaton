@@ -1,0 +1,276 @@
+{% extends 'base.html' %}
+
+{% block title %}Заявки на закупку{% endblock %}
+
+{% block content %}
+<div class="page-top-spacing">
+    <div class="page-header">
+        <div class="purchase-header">
+            <div class="purchase-header-left">
+                <h2 class="page-title">Заявки на закупку</h2>
+                <p class="purchase-subtitle">Управление заказами продуктов</p>
+            </div>
+            <button onclick="openNewRequestModal()" class="btn btn-primary">
+                <span>➕</span> Новая заявка
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Stats Row -->
+<div class="purchase-stats-row">
+    <div class="purchase-stat">
+        <span class="purchase-stat-icon">📋</span>
+        <span class="purchase-stat-value">{{ requests|selectattr('status', 'equalto', 'pending')|list|length }}</span>
+        <span class="purchase-stat-label">На рассмотрении</span>
+    </div>
+    <div class="purchase-stat purchase-stat-success">
+        <span class="purchase-stat-icon">✅</span>
+        <span class="purchase-stat-value">{{ requests|selectattr('status', 'equalto', 'approved')|list|length }}</span>
+        <span class="purchase-stat-label">Одобрено</span>
+    </div>
+    <div class="purchase-stat purchase-stat-danger">
+        <span class="purchase-stat-icon">❌</span>
+        <span class="purchase-stat-value">{{ requests|selectattr('status', 'equalto', 'rejected')|list|length }}</span>
+        <span class="purchase-stat-label">Отклонено</span>
+    </div>
+</div>
+
+<!-- Requests List -->
+<div class="purchase-requests-section">
+    <div class="purchase-section-header">
+        <h3 class="purchase-section-title">
+            <span>📝</span> Все заявки
+        </h3>
+        <div class="purchase-filter">
+            <button class="filter-btn active" onclick="filterRequests('all')">Все</button>
+            <button class="filter-btn" onclick="filterRequests('pending')">Ожидают</button>
+            <button class="filter-btn" onclick="filterRequests('approved')">Одобрены</button>
+        </div>
+    </div>
+    
+    {% if requests %}
+    <div class="purchase-requests-list">
+        {% for req in requests %}
+        <div class="purchase-request-card" data-status="{{ req.status }}">
+            <div class="purchase-request-left">
+                <div class="purchase-request-icon">
+                    {% if 'молок' in req.product.name.lower() %}🥛
+                    {% elif 'яйц' in req.product.name.lower() %}🥚
+                    {% elif 'мук' in req.product.name.lower() %}🌾
+                    {% elif 'сахар' in req.product.name.lower() %}🧂
+                    {% elif 'масл' in req.product.name.lower() %}🧈
+                    {% elif 'курица' in req.product.name.lower() %}🍗
+                    {% elif 'картоф' in req.product.name.lower() %}🥔
+                    {% elif 'морков' in req.product.name.lower() %}🥕
+                    {% elif 'рыб' in req.product.name.lower() %}🐟
+                    {% elif 'макарон' in req.product.name.lower() %}🍝
+                    {% else %}📦{% endif %}
+                </div>
+                <div class="purchase-request-info">
+                    <h4 class="purchase-request-name">{{ req.product.name }}</h4>
+                    <p class="purchase-request-meta">
+                        <span class="purchase-request-qty">{{ req.quantity }} {{ req.product.unit }}</span>
+                        <span class="purchase-request-date">{{ req.created_at.strftime('%d.%m.%Y') }}</span>
+                    </p>
+                    <p class="purchase-request-author">Заявитель: {{ req.created_by }}</p>
+                </div>
+            </div>
+            <div class="purchase-request-right">
+                <span class="purchase-status-badge {% if req.status == 'pending' %}status-pending{% elif req.status == 'approved' %}status-approved{% else %}status-rejected{% endif %}">
+                    {% if req.status == 'pending' %}
+                    <span>⏳</span> На рассмотрении
+                    {% elif req.status == 'approved' %}
+                    <span>✅</span> Одобрено
+                    {% else %}
+                    <span>❌</span> Отклонено
+                    {% endif %}
+                </span>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="purchase-empty">
+        <span class="purchase-empty-icon">📭</span>
+        <h3>Нет заявок</h3>
+        <p>Создайте первую заявку на закупку</p>
+        <button onclick="openNewRequestModal()" class="btn btn-primary">
+            <span>➕</span> Создать заявку
+        </button>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Quick Products Section -->
+<div class="purchase-quick-section">
+    <div class="purchase-section-header">
+        <h3 class="purchase-section-title">
+            <span>⚡</span> Быстрый заказ
+        </h3>
+    </div>
+    <div class="purchase-quick-grid">
+        {% for product in products %}
+        {% set status = 'critical' if product.quantity <= product.min_quantity * 0.5 else ('low' if product.quantity <= product.min_quantity else 'ok') %}
+        <div class="purchase-quick-card {% if status == 'critical' %}quick-critical{% elif status == 'low' %}quick-low{% endif %}"
+             onclick="quickOrder({{ product.id }}, '{{ product.name }}', {{ product.min_quantity * 2 }}, '{{ product.unit }}')">
+            <div class="quick-card-icon">
+                {% if 'молок' in product.name.lower() %}🥛
+                {% elif 'яйц' in product.name.lower() %}🥚
+                {% elif 'мук' in product.name.lower() %}🌾
+                {% elif 'сахар' in product.name.lower() %}🧂
+                {% elif 'масл' in product.name.lower() %}🧈
+                {% elif 'курица' in product.name.lower() %}🍗
+                {% elif 'картоф' in product.name.lower() %}🥔
+                {% elif 'морков' in product.name.lower() %}🥕
+                {% elif 'рыб' in product.name.lower() %}🐟
+                {% elif 'макарон' in product.name.lower() %}🍝
+                {% else %}📦{% endif %}
+            </div>
+            <div class="quick-card-info">
+                <span class="quick-card-name">{{ product.name }}</span>
+                <span class="quick-card-stock">Остаток: {{ product.quantity }} {{ product.unit }}</span>
+            </div>
+            {% if status != 'ok' %}
+            <span class="quick-card-badge">!</span>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- New Request Modal -->
+<div id="new-request-modal" class="modal-overlay hidden">
+    <div class="modal">
+        <div class="modal-header">
+            <h3 class="modal-title">Новая заявка на закупку</h3>
+            <button onclick="closeModal('new-request-modal')" class="modal-close">✕</button>
+        </div>
+        <div class="modal-body">
+            <div class="new-request-form">
+                <div class="form-group">
+                    <label class="form-label">Продукт</label>
+                    <select id="new-request-product" class="form-select" onchange="updateProductUnit()">
+                        {% for product in products %}
+                        <option value="{{ product.id }}" data-unit="{{ product.unit }}" data-min="{{ product.min_quantity }}">
+                            {{ product.name }} (осталось: {{ product.quantity }} {{ product.unit }})
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Количество</label>
+                    <div class="simple-qty-input-wrapper">
+                        <input type="number" id="new-request-qty" class="form-input" min="1" value="10" placeholder="Введите количество">
+                        <span class="simple-qty-unit" id="new-request-unit">л</span>
+                    </div>
+                </div>
+                
+                <div class="new-request-actions">
+                    <button onclick="closeModal('new-request-modal')" class="btn btn-secondary">Отмена</button>
+                    <button onclick="createNewRequest()" class="btn btn-primary">
+                        <span>📤</span> Отправить заявку
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Проверяем URL параметры при загрузке
+document.addEventListener('DOMContentLoaded', function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const productId = urlParams.get('product_id');
+    const productName = urlParams.get('product_name');
+    const quantity = urlParams.get('quantity');
+    const autoOpen = urlParams.get('auto_open');
+    
+    if (autoOpen === '1' && productId) {
+        // Открываем модальное окно с предзаполненными данными
+        setTimeout(() => {
+            openNewRequestModal();
+            
+            // Устанавливаем выбранный продукт
+            const select = document.getElementById('new-request-product');
+            select.value = productId;
+            updateProductUnit();
+            
+            // Устанавливаем количество
+            if (quantity) {
+                document.getElementById('new-request-qty').value = quantity;
+            }
+            
+            // Очищаем URL
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }, 300);
+    }
+});
+
+function openNewRequestModal() {
+    openModal('new-request-modal');
+    updateProductUnit();
+}
+
+function updateProductUnit() {
+    const select = document.getElementById('new-request-product');
+    const selectedOption = select.options[select.selectedIndex];
+    const unit = selectedOption.dataset.unit;
+    document.getElementById('new-request-unit').textContent = unit;
+}
+
+function createNewRequest() {
+    const productId = document.getElementById('new-request-product').value;
+    const qty = document.getElementById('new-request-qty').value;
+    
+    if (!qty || qty <= 0) {
+        showToast('Введите количество', 'error');
+        return;
+    }
+    
+    fetch('/api/purchase-request', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ product_id: parseInt(productId), quantity: parseFloat(qty) })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            showToast(data.message, 'success');
+            closeModal('new-request-modal');
+            setTimeout(() => location.reload(), 500);
+        } else {
+            showToast(data.message || 'Ошибка', 'error');
+        }
+    });
+}
+
+function quickOrder(productId, name, suggestedQty, unit) {
+    openNewRequestModal();
+    
+    const select = document.getElementById('new-request-product');
+    select.value = productId;
+    updateProductUnit();
+    
+    document.getElementById('new-request-qty').value = suggestedQty;
+}
+
+function filterRequests(status) {
+    // Обновляем активную кнопку
+    document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+    event.target.classList.add('active');
+    
+    // Фильтруем карточки
+    document.querySelectorAll('.purchase-request-card').forEach(card => {
+        if (status === 'all' || card.dataset.status === status) {
+            card.style.display = '';
+        } else {
+            card.style.display = 'none';
+        }
+    });
+}
+</script>
+{% endblock %}

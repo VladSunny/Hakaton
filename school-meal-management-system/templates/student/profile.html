@@ -1,0 +1,333 @@
+{% extends 'base.html' %}
+
+{% block title %}Профиль{% endblock %}
+
+{% block content %}
+<div class="page-top-spacing">
+    <div class="page-header mb-8">
+        <h2 class="page-title">Мой профиль</h2>
+    </div>
+</div>
+
+<div class="profile-page-grid">
+    <!-- Profile Card -->
+    <div class="profile-main-card">
+        <!-- Header with gradient -->
+        <div class="profile-card-header">
+            <div class="profile-header-pattern"></div>
+        </div>
+        
+        <!-- Avatar -->
+        <div class="profile-avatar-wrapper">
+            <div class="profile-avatar-large">
+                {{ current_user.name.split()[0][0] }}{{ current_user.name.split()[-1][0] if current_user.name.split()|length > 1 else '' }}
+            </div>
+            <div class="profile-online-badge">✓</div>
+        </div>
+        
+        <!-- User Info -->
+        <div class="profile-info-section">
+            <h3 class="profile-name">{{ current_user.name }}</h3>
+            <div class="profile-class-badge">
+                <span class="profile-class-icon">🎓</span>
+                <span>{{ current_user.student_class }}</span>
+            </div>
+            <p class="profile-email">{{ current_user.email }}</p>
+            <button onclick="openEditProfileModal()" class="btn btn-secondary mt-4">
+                <span>✏️</span> Редактировать профиль
+            </button>
+        </div>
+        
+        <!-- Stats Grid -->
+        <div class="profile-stats-grid">
+            <div class="profile-stat-card profile-stat-balance">
+                <div class="profile-stat-icon-wrapper">
+                    <span>💰</span>
+                </div>
+                <div class="profile-stat-content">
+                    <span class="profile-stat-number">{{ current_user.balance }}</span>
+                    <span class="profile-stat-currency">₽</span>
+                </div>
+                <span class="profile-stat-name">Баланс</span>
+            </div>
+            <div class="profile-stat-card profile-stat-orders">
+                <div class="profile-stat-icon-wrapper">
+                    <span>🛒</span>
+                </div>
+                <div class="profile-stat-content">
+                    <span class="profile-stat-number">{{ orders_count }}</span>
+                </div>
+                <span class="profile-stat-name">Заказов</span>
+            </div>
+            <div class="profile-stat-card profile-stat-rating">
+                <div class="profile-stat-icon-wrapper">
+                    <span>⭐</span>
+                </div>
+                <div class="profile-stat-content">
+                    <span class="profile-stat-number">4.8</span>
+                </div>
+                <span class="profile-stat-name">Рейтинг</span>
+            </div>
+        </div>
+        
+        <!-- Quick Actions -->
+        <div class="profile-quick-actions">
+            <a href="{{ url_for('student_payment') }}" class="profile-action-btn profile-action-primary">
+                <span class="profile-action-icon">💳</span>
+                <span>Пополнить баланс</span>
+            </a>
+            <a href="{{ url_for('student_orders') }}" class="profile-action-btn profile-action-secondary">
+                <span class="profile-action-icon">📋</span>
+                <span>Мои заказы</span>
+            </a>
+        </div>
+    </div>
+    
+    <!-- Right Column -->
+    <div class="profile-right-column">
+        <!-- Allergies Card -->
+        <div class="profile-settings-card">
+            <div class="profile-settings-header">
+                <div class="profile-settings-icon allergy-icon">
+                    <span>⚠️</span>
+                </div>
+                <div class="profile-settings-title">
+                    <h3>Пищевые аллергии</h3>
+                    <p>Блюда с аллергенами будут выделены</p>
+                </div>
+            </div>
+            
+            <div class="allergens-selection" id="allergies-container">
+                {% for allergen in all_allergens %}
+                <button onclick="toggleAllergen('{{ allergen }}')" 
+                        class="allergen-chip {% if allergen in user_allergies %}active{% endif %}"
+                        data-allergen="{{ allergen }}">
+                    <span class="allergen-icon">
+                        {% if allergen == 'глютен' %}🌾{% elif allergen == 'молоко' %}🥛{% elif allergen == 'яйца' %}🥚{% elif allergen == 'орехи' %}🥜{% elif allergen == 'рыба' %}🐟{% elif allergen == 'соя' %}🫘{% elif allergen == 'арахис' %}🥜{% else %}❌{% endif %}
+                    </span>
+                    <span class="allergen-name">{{ allergen }}</span>
+                    <span class="allergen-check">✓</span>
+                </button>
+                {% endfor %}
+            </div>
+            
+            <div class="allergen-hint">
+                <span class="hint-icon">💡</span>
+                <span>Выбранные аллергены: <strong>{{ user_allergies|length }}</strong></span>
+            </div>
+        </div>
+        
+        <!-- Preferences Card -->
+        <div class="profile-settings-card">
+            <div class="profile-settings-header">
+                <div class="profile-settings-icon preferences-icon">
+                    <span>⚙️</span>
+                </div>
+                <div class="profile-settings-title">
+                    <h3>Настройки</h3>
+                    <p>Уведомления и предпочтения</p>
+                </div>
+            </div>
+            
+            <div class="settings-list">
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <span class="setting-icon">🔔</span>
+                        <div class="setting-text">
+                            <span class="setting-name">Уведомления</span>
+                            <span class="setting-desc">О новых блюдах и акциях</span>
+                        </div>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" checked>
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+                
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <span class="setting-icon">📧</span>
+                        <div class="setting-text">
+                            <span class="setting-name">Email-рассылка</span>
+                            <span class="setting-desc">Еженедельное меню</span>
+                        </div>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+                
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <span class="setting-icon">🌙</span>
+                        <div class="setting-text">
+                            <span class="setting-name">Тёмная тема</span>
+                            <span class="setting-desc">Скоро появится</span>
+                        </div>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" disabled>
+                        <span class="toggle-slider disabled"></span>
+                    </label>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Account Info Card -->
+        <div class="profile-settings-card">
+            <div class="profile-settings-header">
+                <div class="profile-settings-icon account-icon">
+                    <span>👤</span>
+                </div>
+                <div class="profile-settings-title">
+                    <h3>Аккаунт</h3>
+                    <p>Информация об учётной записи</p>
+                </div>
+            </div>
+            
+            <div class="account-info-list">
+                <div class="account-info-item">
+                    <span class="account-info-label">ID ученика</span>
+                    <span class="account-info-value">#{{ current_user.id }}</span>
+                </div>
+                <div class="account-info-item">
+                    <span class="account-info-label">Дата регистрации</span>
+                    <span class="account-info-value">{{ current_user.created_at.strftime('%d.%m.%Y') }}</span>
+                </div>
+                <div class="account-info-item">
+                    <span class="account-info-label">Статус</span>
+                    <span class="account-status active">Активен</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Profile Modal -->
+<div id="edit-profile-modal" class="modal-overlay hidden">
+    <div class="modal">
+        <div class="modal-header">
+            <h3 class="modal-title">Редактировать профиль</h3>
+            <button onclick="closeModal('edit-profile-modal')" class="modal-close">✕</button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label class="form-label">ФИО</label>
+                <input type="text" id="edit-name" class="form-input" value="{{ current_user.name }}">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Email</label>
+                <input type="email" id="edit-email" class="form-input" value="{{ current_user.email }}">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Класс</label>
+                <select id="edit-class" class="form-select">
+                    {% for grade in range(5, 12) %}
+                    <option value="{{ grade }}А" {% if current_user.student_class == grade|string + 'А' %}selected{% endif %}>{{ grade }}А</option>
+                    <option value="{{ grade }}Б" {% if current_user.student_class == grade|string + 'Б' %}selected{% endif %}>{{ grade }}Б</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Новый пароль (оставьте пустым, чтобы не менять)</label>
+                <input type="password" id="edit-password" class="form-input" placeholder="Новый пароль">
+            </div>
+            <div class="modal-actions">
+                <button onclick="closeModal('edit-profile-modal')" class="btn btn-secondary">Отмена</button>
+                <button onclick="saveProfile()" class="btn btn-primary">
+                    <span>✓</span> Сохранить
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let userAllergies = {{ user_allergies | tojson }};
+
+function toggleAllergen(allergen) {
+    const index = userAllergies.indexOf(allergen);
+    if (index > -1) {
+        userAllergies.splice(index, 1);
+    } else {
+        userAllergies.push(allergen);
+    }
+    
+    // Update UI
+    document.querySelectorAll('.allergen-chip').forEach(btn => {
+        const a = btn.dataset.allergen;
+        if (userAllergies.includes(a)) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+    });
+    
+    // Update counter
+    document.querySelector('.allergen-hint strong').textContent = userAllergies.length;
+    
+    // Save to server
+    fetch('/api/allergies', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ allergies: userAllergies })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            showToast('Настройки аллергий обновлены', 'success');
+        }
+    });
+}
+
+// Profile editing
+function openEditProfileModal() {
+    openModal('edit-profile-modal');
+}
+
+function saveProfile() {
+    const name = document.getElementById('edit-name').value;
+    const email = document.getElementById('edit-email').value;
+    const studentClass = document.getElementById('edit-class').value;
+    const password = document.getElementById('edit-password').value;
+    
+    if (!name || !email) {
+        showToast('Заполните обязательные поля', 'error');
+        return;
+    }
+    
+    const data = {
+        name: name,
+        email: email,
+        student_class: studentClass
+    };
+    
+    if (password) {
+        if (password.length < 6) {
+            showToast('Пароль должен быть минимум 6 символов', 'error');
+            return;
+        }
+        data.password = password;
+    }
+    
+    fetch('/api/profile/update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            showToast(data.message, 'success');
+            closeModal('edit-profile-modal');
+            setTimeout(() => location.reload(), 500);
+        } else {
+            showToast(data.message, 'error');
+        }
+    });
+}
+</script>
+{% endblock %}

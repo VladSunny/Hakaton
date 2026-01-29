@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+
+{% block title %}Мои заказы{% endblock %}
+
+{% block content %}
+<div class="page-top-spacing">
+    <div class="page-header">
+        <h2 class="page-title">Мои заказы</h2>
+    </div>
+</div>
+
+{% if orders %}
+<div class="space-y-4">
+    {% for order in orders %}
+    <div class="order-card" id="order-{{ order.id }}">
+        <div class="order-header">
+            <div class="flex items-center gap-2 flex-wrap">
+                <span class="order-date">{{ order.created_at.strftime('%d.%m.%Y %H:%M') }}</span>
+                <span class="badge {% if order.meal_type == 'breakfast' %}badge-warning{% else %}badge-info{% endif %}">
+                    {% if order.meal_type == 'breakfast' %}Завтрак{% else %}Обед{% endif %}
+                </span>
+            </div>
+            <span class="badge {% if order.status == 'received' %}badge-success{% else %}badge-primary{% endif %}">
+                {% if order.status == 'received' %}Получено{% else %}Ожидает получения{% endif %}
+            </span>
+        </div>
+        <div class="order-items">
+            {% for item in order.items %}
+            <div class="order-item">
+                <span>{{ item.name }}</span>
+                <span class="font-medium">{{ item.price }} ₽</span>
+            </div>
+            {% endfor %}
+        </div>
+        <div class="order-footer">
+            <span class="order-total">Итого: {{ order.total }} ₽</span>
+            {% if order.status != 'received' %}
+            <button onclick="markReceived({{ order.id }})" class="btn btn-success">
+                <i class="fas fa-check mr-1"></i>Отметить получение
+            </button>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="text-center py-12">
+    <i class="fas fa-shopping-bag text-5xl mb-4 text-gray-300"></i>
+    <p class="text-gray-500 mb-4">У вас пока нет заказов</p>
+    <a href="{{ url_for('student_menu') }}" class="btn btn-primary">
+        Перейти в меню
+    </a>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+function markReceived(orderId) {
+    fetch(`/api/order/${orderId}/receive`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            showToast('Заказ отмечен как полученный', 'success');
+            location.reload();
+        }
+    });
+}
+</script>
+{% endblock %}

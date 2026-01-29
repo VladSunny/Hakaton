@@ -1,0 +1,246 @@
+{% extends 'base.html' %}
+
+{% block title %}Остатки продуктов{% endblock %}
+
+{% block content %}
+<div class="page-top-spacing">
+    <div class="page-header">
+        <div class="inventory-header-simple">
+            <h2 class="page-title">Остатки продуктов</h2>
+            <div class="inventory-summary">
+                <span class="inventory-summary-item">
+                    <span class="summary-icon">📦</span>
+                    <span class="summary-value">{{ products|length }}</span>
+                    <span class="summary-label">всего</span>
+                </span>
+                <span class="inventory-summary-item warning">
+                    <span class="summary-icon">⚠️</span>
+                    <span class="summary-value" id="low-count">{{ low_count }}</span>
+                    <span class="summary-label">требуют внимания</span>
+                </span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Products List -->
+<div class="products-list-container">
+    <div class="products-list">
+        {% for product in products %}
+        {% set status = 'critical' if product.quantity <= product.min_quantity * 0.5 else ('low' if product.quantity <= product.min_quantity else 'ok') %}
+        
+        <div class="product-list-item {{ status }}" 
+             data-product-id="{{ product.id }}"
+             data-product-name="{{ product.name }}"
+             data-product-unit="{{ product.unit }}"
+             data-product-qty="{{ product.quantity }}"
+             data-product-min="{{ product.min_quantity }}"
+             onclick="showRestockModal({{ product.id }}, '{{ product.name }}', {{ product.quantity }}, {{ product.min_quantity }}, '{{ product.unit }}')">
+            
+            <div class="product-list-left">
+                <span class="product-list-icon">
+                    {% if 'молок' in product.name.lower() %}🥛
+                    {% elif 'яйц' in product.name.lower() %}🥚
+                    {% elif 'мук' in product.name.lower() %}🌾
+                    {% elif 'сахар' in product.name.lower() %}🧂
+                    {% elif 'масл' in product.name.lower() %}🧈
+                    {% elif 'курица' in product.name.lower() or 'куриц' in product.name.lower() %}🍗
+                    {% elif 'картоф' in product.name.lower() %}🥔
+                    {% elif 'морков' in product.name.lower() %}🥕
+                    {% elif 'рыб' in product.name.lower() %}🐟
+                    {% elif 'макарон' in product.name.lower() %}🍝
+                    {% else %}📦{% endif %}
+                </span>
+                <div class="product-list-info">
+                    <span class="product-list-name">{{ product.name }}</span>
+                    <span class="product-list-min">Мин. запас: {{ product.min_quantity }} {{ product.unit }}</span>
+                </div>
+            </div>
+            
+            <div class="product-list-right">
+                <div class="product-list-quantity">
+                    <span class="quantity-value" id="qty-{{ product.id }}">{{ product.quantity }}</span>
+                    <span class="quantity-unit">{{ product.unit }}</span>
+                </div>
+                <span class="product-list-status {{ status }}">
+                    {% if status == 'critical' %}⚠️
+                    {% elif status == 'low' %}⚡
+                    {% else %}✓{% endif %}
+                </span>
+                <button class="product-edit-btn" onclick="event.stopPropagation(); openEditModal({{ product.id }}, '{{ product.name }}', {{ product.quantity }}, '{{ product.unit }}')">
+                    ✏️
+                </button>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Edit Quantity Modal -->
+<div id="edit-modal" class="modal-overlay hidden">
+    <div class="modal modal-small">
+        <div class="modal-header">
+            <h3 class="modal-title">Изменить количество</h3>
+            <button onclick="closeModal('edit-modal')" class="modal-close">✕</button>
+        </div>
+        <div class="modal-body">
+            <div class="edit-product-name" id="edit-product-name"></div>
+            
+            <div class="edit-quantity-wrapper">
+                <input type="number" id="edit-quantity" class="edit-quantity-input" min="0" step="0.1">
+                <span class="edit-quantity-unit" id="edit-unit"></span>
+            </div>
+            
+            <input type="hidden" id="edit-product-id">
+            
+            <div class="edit-modal-buttons">
+                <button onclick="closeModal('edit-modal')" class="btn btn-secondary">Отмена</button>
+                <button onclick="saveQuantity()" class="btn btn-primary">Сохранить</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Restock Modal -->
+<div id="restock-modal" class="modal-overlay hidden">
+    <div class="modal modal-small">
+        <div class="modal-header">
+            <h3 class="modal-title">Пополнение запаса</h3>
+            <button onclick="closeModal('restock-modal')" class="modal-close">✕</button>
+        </div>
+        <div class="modal-body">
+            <div class="restock-product-info">
+                <span class="restock-product-icon" id="restock-icon">📦</span>
+                <span class="restock-product-name" id="restock-name"></span>
+            </div>
+            
+            <div class="restock-stats">
+                <div class="restock-stat">
+                    <span class="restock-stat-label">Текущий остаток</span>
+                    <span class="restock-stat-value" id="restock-current"></span>
+                </div>
+                <div class="restock-stat">
+                    <span class="restock-stat-label">Минимальный запас</span>
+                    <span class="restock-stat-value" id="restock-min"></span>
+                </div>
+                <div class="restock-stat highlight">
+                    <span class="restock-stat-label">Рекомендуемый заказ</span>
+                    <span class="restock-stat-value" id="restock-recommended"></span>
+                </div>
+            </div>
+            
+            <input type="hidden" id="restock-product-id">
+            <input type="hidden" id="restock-product-name-value">
+            <input type="hidden" id="restock-quantity">
+            
+            <div class="restock-modal-buttons">
+                <button onclick="closeModal('restock-modal')" class="btn btn-secondary">Закрыть</button>
+                <button onclick="goToPurchase()" class="btn btn-primary">
+                    🛒 Создать заявку
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const productsData = {};
+{% for product in products %}
+productsData[{{ product.id }}] = {
+    name: '{{ product.name }}',
+    unit: '{{ product.unit }}',
+    quantity: {{ product.quantity }},
+    minQuantity: {{ product.min_quantity }}
+};
+{% endfor %}
+
+function openEditModal(id, name, qty, unit) {
+    document.getElementById('edit-product-id').value = id;
+    document.getElementById('edit-product-name').textContent = name;
+    document.getElementById('edit-quantity').value = qty;
+    document.getElementById('edit-unit').textContent = unit;
+    openModal('edit-modal');
+}
+
+function saveQuantity() {
+    const id = document.getElementById('edit-product-id').value;
+    const qty = parseFloat(document.getElementById('edit-quantity').value);
+    
+    fetch(`/api/product/${id}/update`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ quantity: qty })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            document.getElementById(`qty-${id}`).textContent = qty;
+            productsData[id].quantity = qty;
+            updateProductStatus(id, qty);
+            updateLowCount();
+            closeModal('edit-modal');
+            showToast('Количество обновлено', 'success');
+        }
+    });
+}
+
+function updateProductStatus(id, qty) {
+    const minQty = productsData[id].minQuantity;
+    const item = document.querySelector(`[data-product-id="${id}"]`);
+    const statusEl = item.querySelector('.product-list-status');
+    
+    // Remove old status
+    item.classList.remove('ok', 'low', 'critical');
+    statusEl.classList.remove('ok', 'low', 'critical');
+    
+    // Determine new status
+    let status = 'ok';
+    let icon = '✓';
+    if (qty <= minQty * 0.5) {
+        status = 'critical';
+        icon = '⚠️';
+    } else if (qty <= minQty) {
+        status = 'low';
+        icon = '⚡';
+    }
+    
+    item.classList.add(status);
+    statusEl.classList.add(status);
+    statusEl.textContent = icon;
+}
+
+function updateLowCount() {
+    let count = 0;
+    for (const id in productsData) {
+        if (productsData[id].quantity <= productsData[id].minQuantity) {
+            count++;
+        }
+    }
+    document.getElementById('low-count').textContent = count;
+}
+
+function showRestockModal(id, name, qty, minQty, unit) {
+    const recommendedQty = Math.max(minQty * 2 - qty, minQty);
+    
+    document.getElementById('restock-product-id').value = id;
+    document.getElementById('restock-product-name-value').value = name;
+    document.getElementById('restock-quantity').value = recommendedQty;
+    document.getElementById('restock-name').textContent = name;
+    document.getElementById('restock-current').textContent = qty + ' ' + unit;
+    document.getElementById('restock-min').textContent = minQty + ' ' + unit;
+    document.getElementById('restock-recommended').textContent = recommendedQty + ' ' + unit;
+    
+    openModal('restock-modal');
+}
+
+function goToPurchase() {
+    const productId = document.getElementById('restock-product-id').value;
+    const productName = document.getElementById('restock-product-name-value').value;
+    const quantity = document.getElementById('restock-quantity').value;
+    
+    window.location.href = `/cook/purchase?product_id=${productId}&product_name=${encodeURIComponent(productName)}&quantity=${quantity}&auto_open=1`;
+}
+</script>
+{% endblock %}

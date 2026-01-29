@@ -1,0 +1,261 @@
+{% extends 'base.html' %}
+
+{% block title %}Оплата{% endblock %}
+
+{% block content %}
+<div class="page-top-spacing">
+    <div class="page-header">
+        <h2 class="page-title">Оплата питания</h2>
+    </div>
+</div>
+
+<div class="payment-grid">
+    <!-- Balance Card -->
+    <div class="card">
+        <div class="card-body">
+            <!-- Balance Display -->
+            <div class="balance-card-display">
+                <div class="balance-icon-wrapper">
+                    <span class="balance-icon">💰</span>
+                </div>
+                <div class="balance-info">
+                    <p class="balance-label">Ваш баланс</p>
+                    <p id="balance-display" class="balance-amount">{{ current_user.balance }} ₽</p>
+                </div>
+            </div>
+
+            <!-- Divider -->
+            <div class="payment-divider"></div>
+
+            <!-- Top Up Section -->
+            <div class="topup-section">
+                <h3 class="payment-section-title">
+                    <span class="payment-section-icon">💳</span>
+                    Пополнить баланс
+                </h3>
+                
+                <div class="topup-buttons">
+                    <button onclick="topUp(300)" class="topup-amount-btn">
+                        <span class="topup-value">300</span>
+                        <span class="topup-currency">₽</span>
+                    </button>
+                    <button onclick="topUp(500)" class="topup-amount-btn">
+                        <span class="topup-value">500</span>
+                        <span class="topup-currency">₽</span>
+                    </button>
+                    <button onclick="topUp(1000)" class="topup-amount-btn topup-popular">
+                        <span class="topup-popular-badge">Популярное</span>
+                        <span class="topup-value">1000</span>
+                        <span class="topup-currency">₽</span>
+                    </button>
+                    <button onclick="topUp(2000)" class="topup-amount-btn">
+                        <span class="topup-value">2000</span>
+                        <span class="topup-currency">₽</span>
+                    </button>
+                </div>
+
+                <div class="topup-custom-wrapper">
+                    <div class="topup-custom-input-wrapper">
+                        <span class="topup-input-icon">₽</span>
+                        <input type="number" id="custom-amount" class="topup-custom-input" placeholder="Другая сумма">
+                    </div>
+                    <button onclick="topUp(parseInt(document.getElementById('custom-amount').value))" class="btn btn-primary topup-custom-btn">
+                        Пополнить
+                    </button>
+                </div>
+            </div>
+
+            <!-- Payment Methods -->
+            <div class="payment-methods">
+                <p class="payment-methods-title">Способы оплаты</p>
+                <div class="payment-methods-icons">
+                    <span class="payment-method" title="Банковская карта">💳</span>
+                    <span class="payment-method" title="СБП">🏦</span>
+                    <span class="payment-method" title="Наличные в кассе">💵</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Subscriptions Card -->
+    <div class="card">
+        <div class="card-body">
+            <h3 class="payment-section-title">
+                <span class="payment-section-icon">🎫</span>
+                Абонементы
+            </h3>
+            <p class="payment-section-subtitle">Выгоднее, чем платить за каждый прием пищи отдельно</p>
+
+            <div class="subscriptions-list">
+                <!-- Week Subscription -->
+                <div onclick="buySubscription('week')" class="subscription-item">
+                    <div class="subscription-icon-wrapper subscription-icon-week">
+                        <span>📅</span>
+                    </div>
+                    <div class="subscription-details">
+                        <div class="subscription-header">
+                            <h4 class="subscription-name">Недельный</h4>
+                            <div class="subscription-badge">-15%</div>
+                        </div>
+                        <p class="subscription-description">5 завтраков + 5 обедов</p>
+                        <div class="subscription-footer">
+                            <span class="subscription-price">1 500 ₽</span>
+                            <span class="subscription-old-price">1 750 ₽</span>
+                        </div>
+                    </div>
+                    <span class="subscription-arrow">→</span>
+                </div>
+
+                <!-- Month Subscription -->
+                <div onclick="buySubscription('month')" class="subscription-item subscription-popular">
+                    <div class="subscription-popular-label">Лучшее предложение</div>
+                    <div class="subscription-icon-wrapper subscription-icon-month">
+                        <span>📆</span>
+                    </div>
+                    <div class="subscription-details">
+                        <div class="subscription-header">
+                            <h4 class="subscription-name">Месячный</h4>
+                            <div class="subscription-badge subscription-badge-gold">-20%</div>
+                        </div>
+                        <p class="subscription-description">20 завтраков + 20 обедов</p>
+                        <div class="subscription-footer">
+                            <span class="subscription-price">5 500 ₽</span>
+                            <span class="subscription-old-price">7 000 ₽</span>
+                        </div>
+                    </div>
+                    <span class="subscription-arrow">→</span>
+                </div>
+            </div>
+
+            {% if subscription %}
+            <!-- Active Subscription -->
+            <div class="active-subscription">
+                <div class="active-subscription-header">
+                    <span class="active-subscription-icon">✅</span>
+                    <span class="active-subscription-title">Активный абонемент</span>
+                </div>
+                <div class="active-subscription-body">
+                    <div class="active-subscription-type">
+                        {% if subscription.sub_type == 'week' %}
+                        <span class="active-subscription-emoji">📅</span>
+                        <span>Недельный</span>
+                        {% else %}
+                        <span class="active-subscription-emoji">📆</span>
+                        <span>Месячный</span>
+                        {% endif %}
+                    </div>
+                    <div class="active-subscription-remaining">
+                        <span class="remaining-count">{{ subscription.remaining_meals }}</span>
+                        <span class="remaining-label">приёмов пищи осталось</span>
+                    </div>
+                    <div class="active-subscription-progress">
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: {{ (subscription.remaining_meals / (10 if subscription.sub_type == 'week' else 40)) * 100 }}%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Benefits -->
+            <div class="subscription-benefits">
+                <h4 class="benefits-title">Преимущества абонемента</h4>
+                <ul class="benefits-list">
+                    <li class="benefit-item">
+                        <span class="benefit-icon">💰</span>
+                        <span>Экономия до 20% на питании</span>
+                    </li>
+                    <li class="benefit-item">
+                        <span class="benefit-icon">⚡</span>
+                        <span>Быстрое получение без оплаты</span>
+                    </li>
+                    <li class="benefit-item">
+                        <span class="benefit-icon">📊</span>
+                        <span>Контроль расходов на питание</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Transaction History -->
+<div class="card transaction-history-card">
+    <div class="card-body">
+        <h3 class="payment-section-title">
+            <span class="payment-section-icon">📋</span>
+            История операций
+        </h3>
+        <div class="transaction-list">
+            <div class="transaction-item">
+                <div class="transaction-icon transaction-icon-income">↓</div>
+                <div class="transaction-details">
+                    <span class="transaction-title">Пополнение баланса</span>
+                    <span class="transaction-date">Сегодня, 10:30</span>
+                </div>
+                <span class="transaction-amount transaction-amount-positive">+500 ₽</span>
+            </div>
+            <div class="transaction-item">
+                <div class="transaction-icon transaction-icon-expense">↑</div>
+                <div class="transaction-details">
+                    <span class="transaction-title">Оплата обеда</span>
+                    <span class="transaction-date">Вчера, 13:15</span>
+                </div>
+                <span class="transaction-amount transaction-amount-negative">-180 ₽</span>
+            </div>
+            <div class="transaction-item">
+                <div class="transaction-icon transaction-icon-income">↓</div>
+                <div class="transaction-details">
+                    <span class="transaction-title">Пополнение баланса</span>
+                    <span class="transaction-date">20.01.2025</span>
+                </div>
+                <span class="transaction-amount transaction-amount-positive">+1000 ₽</span>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function topUp(amount) {
+    if (!amount || amount <= 0) {
+        showToast('Введите корректную сумму', 'error');
+        return;
+    }
+    
+    fetch('/api/topup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amount: amount })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            showToast(data.message, 'success');
+            document.getElementById('balance-display').textContent = data.new_balance + ' ₽';
+            document.getElementById('custom-amount').value = '';
+        } else {
+            showToast(data.message, 'error');
+        }
+    });
+}
+
+function buySubscription(type) {
+    fetch('/api/subscription', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: type })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            showToast(data.message, 'success');
+            location.reload();
+        } else {
+            showToast(data.message, 'error');
+        }
+    });
+}
+</script>
+{% endblock %}

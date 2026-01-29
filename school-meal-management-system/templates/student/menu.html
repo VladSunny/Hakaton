@@ -1,0 +1,304 @@
+{% extends 'base.html' %}
+
+{% block title %}Меню{% endblock %}
+
+{% block content %}
+<div class="page-top-spacing">
+    <div class="page-header mb-12">
+        <div class="flex items-center justify-between flex-wrap gap-4">
+            <h2 class="page-title">Меню на сегодня</h2>
+            <div class="balance-badge badge-primary px-4 py-2 rounded-full font-semibold">
+                <i class="fas fa-wallet"></i> Баланс: <span id="user-balance">{{ current_user.balance }}</span> ₽
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Breakfast Section -->
+<div class="section mb-16">
+    <h3 class="section-title">
+        <i class="fas fa-sun text-yellow-500"></i> Завтрак
+    </h3>
+    <div class="menu-cards-grid">
+        {% for item in breakfast %}
+        {% set has_allergen = item.allergens and (item.allergens.split(',') | select('in', user_allergies) | list | length > 0) %}
+        <div class="menu-card {% if has_allergen %}has-allergen{% endif %}" data-menu-id="{{ item.id }}">
+            <div class="menu-card-body">
+                <div class="menu-card-content">
+                    <div class="menu-card-header">
+                        <span class="menu-card-emoji">{{ item.image }}</span>
+                        <span class="menu-card-price">{{ item.price }} ₽</span>
+                    </div>
+                    <h4 class="menu-card-title">{{ item.name }}</h4>
+                    <div class="menu-card-meta">
+                        <i class="fas fa-fire text-orange-400"></i>
+                        <span>{{ item.calories }} ккал</span>
+                    </div>
+                    {% if item.allergens %}
+                    <div class="menu-card-allergens">
+                        <i class="fas fa-exclamation-triangle"></i> {{ item.allergens }}
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="menu-card-actions">
+                    <button onclick="addToCart({{ item.id }}, '{{ item.name }}', {{ item.price }}, 'breakfast', '{{ item.image }}')" 
+                            class="btn btn-primary flex-1">
+                        <i class="fas fa-plus"></i> Добавить
+                    </button>
+                    <button onclick="showReviews({{ item.id }}, '{{ item.name }}', '{{ item.image }}')" 
+                            class="btn btn-secondary">
+                        <i class="fas fa-comments"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Lunch Section -->
+<div class="section">
+    <h3 class="section-title">
+        <i class="fas fa-cloud-sun text-orange-500"></i> Обед
+    </h3>
+    <div class="menu-cards-grid">
+        {% for item in lunch %}
+        {% set has_allergen = item.allergens and (item.allergens.split(',') | select('in', user_allergies) | list | length > 0) %}
+        <div class="menu-card {% if has_allergen %}has-allergen{% endif %}" data-menu-id="{{ item.id }}">
+            <div class="menu-card-body">
+                <div class="menu-card-content">
+                    <div class="menu-card-header">
+                        <span class="menu-card-emoji">{{ item.image }}</span>
+                        <span class="menu-card-price">{{ item.price }} ₽</span>
+                    </div>
+                    <h4 class="menu-card-title">{{ item.name }}</h4>
+                    <div class="menu-card-meta">
+                        <i class="fas fa-fire text-orange-400"></i>
+                        <span>{{ item.calories }} ккал</span>
+                    </div>
+                    {% if item.allergens %}
+                    <div class="menu-card-allergens">
+                        <i class="fas fa-exclamation-triangle"></i> {{ item.allergens }}
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="menu-card-actions">
+                    <button onclick="addToCart({{ item.id }}, '{{ item.name }}', {{ item.price }}, 'lunch', '{{ item.image }}')" 
+                            class="btn btn-primary flex-1">
+                        <i class="fas fa-plus"></i> Добавить
+                    </button>
+                    <button onclick="showReviews({{ item.id }}, '{{ item.name }}', '{{ item.image }}')" 
+                            class="btn btn-secondary">
+                        <i class="fas fa-comments"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Cart Floating Button -->
+<button id="cart-btn" onclick="showCart()" class="cart-floating-btn hidden">
+    <i class="fas fa-shopping-cart"></i>
+    <span id="cart-count" class="cart-count">0</span>
+</button>
+
+<!-- Cart Modal -->
+<div id="cart-modal" class="modal-overlay hidden">
+    <div class="modal">
+        <div class="modal-header">
+            <h3 class="modal-title">Корзина</h3>
+            <button onclick="hideCart()" class="modal-close">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div id="cart-items" class="space-y-3 mb-4">
+                <!-- Cart items will be inserted here -->
+            </div>
+            <div class="border-t pt-4">
+                <div class="flex justify-between items-center mb-4">
+                    <span class="text-lg font-semibold">Итого:</span>
+                    <span id="cart-total" class="text-2xl font-bold text-purple-600">0 ₽</span>
+                </div>
+                <button onclick="checkout()" class="btn btn-primary btn-block btn-lg">
+                    <i class="fas fa-check mr-2"></i>Оформить заказ
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Reviews Modal -->
+<div id="reviews-modal" class="modal-overlay hidden">
+    <div class="modal">
+        <div class="modal-header">
+            <h3 class="modal-title">Отзывы</h3>
+            <button onclick="hideReviews()" class="modal-close">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="modal-body" id="reviews-content">
+            <!-- Reviews will be inserted here -->
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let cart = [];
+
+function addToCart(id, name, price, type, image) {
+    cart.push({ id, name, price, type, image });
+    updateCartUI();
+    showToast(`${name} добавлено в корзину`, 'success');
+}
+
+function removeFromCart(index) {
+    cart.splice(index, 1);
+    updateCartUI();
+    if (cart.length > 0) {
+        renderCartItems();
+    } else {
+        hideCart();
+    }
+}
+
+function updateCartUI() {
+    const cartBtn = document.getElementById('cart-btn');
+    const cartCount = document.getElementById('cart-count');
+    
+    if (cart.length > 0) {
+        cartBtn.classList.remove('hidden');
+        cartCount.textContent = cart.length;
+    } else {
+        cartBtn.classList.add('hidden');
+    }
+}
+
+function showCart() {
+    if (cart.length === 0) {
+        showToast('Корзина пуста', 'info');
+        return;
+    }
+    renderCartItems();
+    openModal('cart-modal');
+}
+
+function hideCart() {
+    closeModal('cart-modal');
+}
+
+function renderCartItems() {
+    const container = document.getElementById('cart-items');
+    const total = cart.reduce((sum, item) => sum + item.price, 0);
+    
+    container.innerHTML = cart.map((item, index) => `
+        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+            <div class="flex items-center">
+                <span class="text-2xl mr-3">${item.image}</span>
+                <span class="font-medium">${item.name}</span>
+            </div>
+            <div class="flex items-center">
+                <span class="font-semibold mr-3">${item.price} ₽</span>
+                <button onclick="removeFromCart(${index})" class="text-red-500 hover:text-red-700">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </div>
+    `).join('');
+    
+    document.getElementById('cart-total').textContent = total + ' ₽';
+}
+
+function checkout() {
+    const total = cart.reduce((sum, item) => sum + item.price, 0);
+    
+    fetch('/api/cart/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ items: cart })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            showToast(data.message, 'success');
+            document.getElementById('user-balance').textContent = data.new_balance;
+            cart = [];
+            updateCartUI();
+            hideCart();
+        } else {
+            showToast(data.message, 'error');
+        }
+    });
+}
+
+function showReviews(menuId, name, image) {
+    const content = `
+        <div class="mb-4">
+            <div class="flex items-center mb-4">
+                <span class="text-4xl mr-3">${image}</span>
+                <h4 class="font-semibold">${name}</h4>
+            </div>
+        </div>
+        <div class="border-t pt-4">
+            <h4 class="font-semibold mb-2">Оставить отзыв</h4>
+            <div class="flex items-center mb-2">
+                <span class="text-sm mr-2">Оценка:</span>
+                <div id="rating-stars" class="rating-stars">
+                    ${[1,2,3,4,5].map(n => `<button onclick="setRating(${n})" class="rating-star" data-rating="${n}">★</button>`).join('')}
+                </div>
+            </div>
+            <textarea id="review-text" class="form-input mb-3" rows="2" placeholder="Ваш отзыв..."></textarea>
+            <button onclick="submitReview(${menuId})" class="btn btn-primary btn-block">
+                Отправить
+            </button>
+        </div>
+    `;
+    document.getElementById('reviews-content').innerHTML = content;
+    openModal('reviews-modal');
+}
+
+function hideReviews() {
+    closeModal('reviews-modal');
+}
+
+let selectedRating = 0;
+
+function setRating(rating) {
+    selectedRating = rating;
+    document.querySelectorAll('#rating-stars button').forEach((btn, i) => {
+        if (i < rating) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+    });
+}
+
+function submitReview(menuId) {
+    if (!selectedRating) {
+        showToast('Выберите оценку', 'error');
+        return;
+    }
+    
+    const text = document.getElementById('review-text').value;
+    
+    fetch('/api/review', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ menu_item_id: menuId, rating: selectedRating, text: text })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            showToast(data.message, 'success');
+            hideReviews();
+            selectedRating = 0;
+        }
+    });
+}
+</script>
+{% endblock %}
